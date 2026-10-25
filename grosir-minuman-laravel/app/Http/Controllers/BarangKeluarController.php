@@ -3,6 +3,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Barang;
 use App\Models\BarangKeluar;
+use App\Models\KasMasuk;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -29,7 +30,6 @@ class BarangKeluarController extends Controller {
             'keterangan'      => 'nullable|string|max:255',
         ]);
 
-        // Cek stok dulu sebelum simpan
         $barang = Barang::findOrFail($validated['barang_id']);
 
         if ($barang->stok < $validated['jumlah']) {
@@ -38,10 +38,30 @@ class BarangKeluarController extends Controller {
             ]);
         }
 
-        DB::transaction(function () use ($validated) {
-            BarangKeluar::create($validated);
+        $totalHarga = $barang->harga * $validated['jumlah'];
+
+        DB::transaction(function () use ($validated, $barang, $totalHarga) {
+            $bk = BarangKeluar::create(array_merge($validated, [
+                'total_harga' => $totalHarga,
+            ]));
+
             Barang::where('id', $validated['barang_id'])
                 ->decrement('stok', $validated['jumlah']);
+
+            if ($validated['tipe_pembayaran'] === 'cash') {
+                $ket = "Penjualan {$barang->nama}";
+                if (!empty($validated['pembeli'])) {
+                    $ket .= " - {$validated['pembeli']}";
+                }
+
+                KasMasuk::create([
+                    'tanggal'          => $validated['tanggal'],
+                    'sumber'           => 'penjualan_tunai',
+                    'keterangan'       => $ket,
+                    'jumlah'           => $totalHarga,
+                    'barang_keluar_id' => $bk->id,
+                ]);
+            }
         });
 
         return redirect()->route('barang-keluar.index')
@@ -50,9 +70,9 @@ class BarangKeluarController extends Controller {
 
     public function destroy(BarangKeluar $barangKeluar) {
         DB::transaction(function () use ($barangKeluar) {
-            // Hapus data → stok dikembalikan
             Barang::where('id', $barangKeluar->barang_id)
                 ->increment('stok', $barangKeluar->jumlah);
+            // kas_masuk akan otomatis terhapus via FK cascade
             $barangKeluar->delete();
         });
 

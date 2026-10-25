@@ -22,9 +22,9 @@
                     ['label' => 'Dashboard',     'route' => '#',                  'active' => false],
                     ['label' => 'Barang Masuk',  'route' => route('barang-masuk.index'), 'active' => request()->routeIs('barang-masuk.*')],
                     ['label' => 'Barang Keluar', 'route' => route('barang-keluar.index'), 'active' => request()->routeIs('barang-keluar.*')],
-                    ['label' => 'Stok Barang',   'route' => '#',                  'active' => false],
-                    ['label' => 'Kas Masuk',     'route' => '#',                  'active' => false],
-                    ['label' => 'Buku Tagihan',  'route' => '#',                  'active' => false],
+                    ['label' => 'Stok Barang', 'route' => route('stok.index'), 'active' => request()->routeIs('stok.*')],
+                    ['label' => 'Kas Masuk', 'route' => route('kas-masuk.index'), 'active' => request()->routeIs('kas-masuk.*')],
+                    ['label' => 'Buku Tagihan', 'route' => route('buku-tagihan.index'), 'active' => request()->routeIs('buku-tagihan.*')],
                 ];
             @endphp
             @foreach ($menu as $item)
@@ -51,6 +51,11 @@
             @if (session('success'))
                 <div class="bg-emerald-100 text-emerald-800 px-4 py-2 rounded mb-4">
                     {{ session('success') }}
+                </div>
+            @endif
+            @if (session('error'))
+                <div class="bg-red-100 text-red-800 px-4 py-2 rounded mb-4">
+                    {{ session('error') }}
                 </div>
             @endif
             @yield('content')
