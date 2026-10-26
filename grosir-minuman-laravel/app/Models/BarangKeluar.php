@@ -5,8 +5,8 @@ use Illuminate\Database\Eloquent\Model;
 class BarangKeluar extends Model {
     protected $table = 'barang_keluar';
     protected $fillable = [
-        'barang_id', 'jumlah', 'total_harga', 'keuntungan', 'tanggal',
-        'pembeli', 'status_pembayaran', 'keterangan',
+        'barang_id', 'jumlah', 'harga_jual', 'total_harga', 'keuntungan', 'tanggal',
+        'pembeli', 'status_pembayaran', 'keterangan','jumlah_box'
     ];
     protected $casts = ['tanggal' => 'date'];
 

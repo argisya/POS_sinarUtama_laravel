@@ -12,7 +12,7 @@
     <div class="bg-white rounded-lg shadow p-4 border-l-4 border-emerald-500">
         <p class="text-xs text-gray-500 uppercase">Total Stok Tersedia</p>
         <p class="text-2xl font-bold text-gray-800">
-            {{ number_format($totalStok) }} <span class="text-sm font-normal">pcs</span>
+            {{ number_format($totalStokBox ?? 0) }} <span class="text-sm font-normal">Box</span>
         </p>
     </div>
     <div class="bg-white rounded-lg shadow p-4 border-l-4 border-amber-500">
@@ -31,10 +31,29 @@
 
         <div class="md:col-span-2">
             <label class="block text-sm mb-1">Nama Barang <span class="text-red-500">*</span></label>
-            <input type="text" name="nama" value="{{ old('nama') }}" required
-                placeholder="cth: Aqua 600ml"
+            <input type="text" name="nama" id="inputNama" value="{{ old('nama') }}" required placeholder="cth: Aqua 600ml"
                 class="w-full border rounded px-3 py-2 text-sm @error('nama') border-red-500 @enderror">
             @error('nama') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+        </div>
+
+        <div>
+            <label class="block text-sm mb-1">Total Box <span class="text-red-500">*</span></label>
+            <input type="number" name="qty_box" id="inputQtyBox" value="{{ old('qty_box', 1) }}" min="0" required
+                class="w-full border rounded px-3 py-2 text-sm @error('qty_box') border-red-500 @enderror">
+            @error('qty_box') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+        </div>
+
+        <div>
+            <label class="block text-sm mb-1">Isi per Box (Pcs) <span class="text-red-500">*</span></label>
+            <input type="number" name="pcs_per_box" id="inputPcsPerBox" value="{{ old('pcs_per_box', 12) }}" min="1" required
+                class="w-full border rounded px-3 py-2 text-sm @error('pcs_per_box') border-red-500 @enderror">
+            @error('pcs_per_box') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+        </div>
+
+        <div>
+            <label class="block text-sm mb-1">Total Pcs (Otomatis)</label>
+            <input type="number" id="inputTotalPcs" readonly
+                class="w-full border rounded px-3 py-2 text-sm bg-gray-100 cursor-not-allowed font-bold text-gray-700">
         </div>
 
         <div class="flex items-end">
@@ -42,6 +61,20 @@
                 Tambah Barang
             </button>
         </div>
+        {{-- Input Box & Pcs --}}
+        <!-- <div class="md:col-span-1">
+            <label class="block text-sm mb-1">Kemasan (Box = Pcs) <span class="text-red-500">*</span></label>
+            <div class="flex items-center gap-2">
+                <input type="number" name="box_master" value="{{ old('box_master', 1) }}" min="1" required
+                    class="w-16 border rounded px-2 py-2 text-sm text-center">
+                <span class="text-sm text-gray-600">Box =</span>
+                <input type="number" name="pcs_master" value="{{ old('pcs_master', 12) }}" min="1" required
+                    class="w-20 border rounded px-2 py-2 text-sm text-center">
+                <span class="text-sm text-gray-600">Pcs</span>
+            </div>
+            @error('box_master') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+            @error('pcs_master') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+        </div> -->
     </form>
 
     <div class="mt-3 text-xs text-gray-500 bg-gray-50 rounded p-3">
@@ -80,7 +113,9 @@
                 <tr>
                     <th class="px-4 py-3 text-left">Kode</th>
                     <th class="px-4 py-3 text-left">Nama Barang</th>
-                    <th class="px-4 py-3 text-right">Stok</th>
+                    <th class="px-4 py-3 text-center">Isi per Box</th>
+                    <th class="px-4 py-3 text-center">Total Box</th>
+                    <th class="px-4 py-3 text-center">Total Pcs</th>
                     <th class="px-4 py-3 text-center">Status</th>
                     <th class="px-4 py-3 text-center">Aksi</th>
                 </tr>
@@ -99,37 +134,45 @@
                             'tidak_aman' => 'Tidak Aman',
                             'habis'      => 'Habis',
                         };
+
+                        // Hitung Total Box dan Sisa Pcs (jika ada)
+                        $totalBox = floor($row->stok / $row->pcs_per_box);
+                        $sisaPcs = $row->stok % $row->pcs_per_box;
                     @endphp
                     <tr class="hover:bg-gray-50">
                         <td class="px-4 py-3 font-mono text-xs">{{ $row->kode_barang }}</td>
                         <td class="px-4 py-3 font-medium">{{ $row->nama }}</td>
-                        <td class="px-4 py-3 text-right">
-                            <span class="font-semibold">{{ number_format($row->stok) }}</span>
-                            <span class="text-xs text-gray-500">pcs</span>
+                        
+                        <td class="px-4 py-3 text-center text-gray-600 text-xs">
+                            {{ $row->pcs_per_box }} Pcs
                         </td>
+                        <td class="px-4 py-3 text-center font-bold text-gray-800">
+                            {{ $totalBox }} Box
+                        </td>
+                        <td class="px-4 py-3 text-center font-bold text-indigo-600">
+                            {{ number_format($row->stok) }} Pcs
+                            @if($sisaPcs > 0)
+                                <span class="block text-[10px] text-gray-500 font-normal">({{ $totalBox }} Box + {{ $sisaPcs }} Pcs)</span>
+                            @endif
+                        </td>
+                        
                         <td class="px-4 py-3 text-center">
                             <span class="px-2 py-1 text-xs rounded {{ $badge }}">{{ $label }}</span>
                         </td>
                         <td class="px-4 py-3 text-center whitespace-nowrap">
-                            <button type="button"
-                                onclick="bukaEdit({{ $row->id }}, @js($row->nama))"
+                            <button type="button" onclick="bukaEdit({{ $row->id }}, @js($row->nama), {{ $row->pcs_per_box }}, {{ $totalBox }})"
                                 class="text-blue-600 hover:underline text-xs mr-2">
                                 Edit
                             </button>
-                            <form method="POST" action="{{ route('master-barang.destroy', $row->id) }}"
-                                  class="inline"
-                                  onsubmit="return confirm('Yakin hapus {{ $row->nama }}?')">
+                            <form method="POST" action="{{ route('master-barang.destroy', $row->id) }}" class="inline"
+                                onsubmit="return confirm('Yakin hapus {{ $row->nama }}?')">
                                 @csrf @method('DELETE')
                                 <button class="text-red-600 hover:underline text-xs">Hapus</button>
                             </form>
                         </td>
                     </tr>
                 @empty
-                    <tr>
-                        <td colspan="5" class="px-4 py-8 text-center text-gray-400">
-                            Belum ada barang. Tambahkan lewat form di atas.
-                        </td>
-                    </tr>
+                    <tr><td colspan="7" class="px-4 py-8 text-center text-gray-400">Belum ada barang.</td></tr>
                 @endforelse
             </tbody>
         </table>
@@ -144,38 +187,58 @@
 <dialog id="modalEdit" class="rounded-lg shadow-2xl backdrop:bg-black/50 p-0 w-full max-w-md">
     <form method="POST" id="formEdit" class="p-6">
         @csrf @method('PUT')
-        <h3 class="text-lg font-semibold mb-4">Edit Nama Barang</h3>
+        <h3 class="text-lg font-semibold mb-4">Edit Barang</h3>
 
-        <div>
-            <label class="block text-sm mb-1">Nama Barang</label>
-            <input type="text" name="nama" id="editNama" required
-                class="w-full border rounded px-3 py-2 text-sm">
+        <div class="space-y-3">
+            <div>
+                <label class="block text-sm mb-1">Nama Barang</label>
+                <input type="text" name="nama" id="editNama" required class="w-full border rounded px-3 py-2 text-sm">
+            </div>
+            
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-sm mb-1">Total Box</label>
+                    <input type="number" name="qty_box" id="editQtyBox" min="0" required class="w-full border rounded px-3 py-2 text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm mb-1">Isi per Box (Pcs)</label>
+                    <input type="number" name="pcs_per_box" id="editPcsPerBox" min="1" required class="w-full border rounded px-3 py-2 text-sm">
+                </div>
+            </div>
         </div>
 
-        <p class="text-xs text-gray-500 mt-3">
-            ℹ️ Harga & stok tidak bisa diedit di sini. Ubah harga lewat <b>Barang Masuk</b>,
-            stok otomatis dari transaksi.
-        </p>
-
         <div class="flex gap-2 mt-5">
-            <button type="submit"
-                class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded text-sm font-medium">
-                Simpan
-            </button>
-            <button type="button" onclick="document.getElementById('modalEdit').close()"
-                class="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded text-sm">
-                Batal
-            </button>
+            <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded text-sm font-medium">Simpan</button>
+            <button type="button" onclick="document.getElementById('modalEdit').close()" class="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded text-sm">Batal</button>
         </div>
     </form>
 </dialog>
 
+@push('scripts')
 <script>
-    function bukaEdit(id, nama) {
+    function bukaEdit(id, nama, pcsPerBox, qtyBox) {
         document.getElementById('formEdit').action = `/master-barang/${id}`;
-        document.getElementById('editNama').value   = nama;
+        document.getElementById('editNama').value = nama;
+        document.getElementById('editPcsPerBox').value = pcsPerBox;
+        document.getElementById('editQtyBox').value = qtyBox;
         document.getElementById('modalEdit').showModal();
     }
 </script>
 
+<script>
+    const qtyBoxInput = document.getElementById('inputQtyBox');
+    const pcsPerBoxInput = document.getElementById('inputPcsPerBox');
+    const totalPcsInput = document.getElementById('inputTotalPcs');
+
+    function hitungTotalPcs() {
+        const box = parseInt(qtyBoxInput.value) || 0;
+        const pcs = parseInt(pcsPerBoxInput.value) || 0;
+        totalPcsInput.value = box * pcs;
+    }
+
+    qtyBoxInput.addEventListener('input', hitungTotalPcs);
+    pcsPerBoxInput.addEventListener('input', hitungTotalPcs);
+    hitungTotalPcs(); // Jalankan saat halaman dimuat
+</script>
+@endpush
 @endsection

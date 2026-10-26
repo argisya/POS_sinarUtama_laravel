@@ -4,7 +4,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Barang extends Model {
     protected $table = 'barang';
-    protected $fillable = ['kode_barang', 'nama', 'satuan', 'harga', 'stok', 'stok_minimum'];
+    protected $fillable = ['kode_barang', 'nama', 'satuan', 'harga', 'stok', 'stok_minimum', 'pcs_per_box'];
 
     protected static function boot() {
         parent::boot();

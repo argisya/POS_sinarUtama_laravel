@@ -7,7 +7,7 @@ class BarangMasuk extends Model {
     protected $fillable = [
         'barang_id', 'jumlah', 'harga_satuan', 'tanggal',
         'tanggal_jatuh_tempo',
-        'supplier', 'status_pembayaran',
+        'supplier', 'status_pembayaran', 'jumlah_box'
     ];
     protected $casts = [
         'tanggal' => 'date',

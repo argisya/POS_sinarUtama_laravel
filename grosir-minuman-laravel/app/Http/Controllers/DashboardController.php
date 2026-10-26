@@ -18,7 +18,7 @@ class DashboardController extends Controller {
         // Piutang = total transaksi yang belum lunas
         $allBarangMasuk = BarangMasuk::all();
             $totalPiutang = $allBarangMasuk->where('status_pembayaran', 'belum_lunas')->sum(function ($row) {
-                return $row->jumlah * $row->harga_satuan;
+                return $row->jumlah_box * $row->harga_satuan;
             });
 
         // ===== UTANG: Barang Keluar yang Belum Lunas =====
@@ -88,30 +88,30 @@ class DashboardController extends Controller {
             ])
             ->toBase();   // ⬅️ convert ke base Collection
 
-        // --- MENGGUNAKAN COLLECTION (ANTI GAGAL) ---
-            $allBarangMasuk = BarangMasuk::all();
+        // --- MENGGUNAKAN COLLECTION ---
+        $allBarangMasuk = BarangMasuk::all();
 
-            $totalModal = $allBarangMasuk->sum(function ($row) {
-                return $row->jumlah * $row->harga_satuan;
-            });
+        $totalModal = $allBarangMasuk->sum(function ($row) {
+            return $row->jumlah_box * $row->harga_satuan;
+        });
 
-            $totalModalLunas = $allBarangMasuk->where('status_pembayaran', 'lunas')->sum(function ($row) {
-                return $row->jumlah * $row->harga_satuan;
-            });
+        $totalModalLunas = $allBarangMasuk->where('status_pembayaran', 'lunas')->sum(function ($row) {
+            return $row->jumlah_box * $row->harga_satuan;
+        });
 
-            $totalModalBelumLunas = $totalModal - $totalModalLunas;
+        $totalModalBelumLunas = $totalModal - $totalModalLunas;
 
-            $totalModalBulanIni = $allBarangMasuk->filter(function ($row) {
-                $tgl = \Carbon\Carbon::parse($row->tanggal);
-                return $tgl->month === now()->month && $tgl->year === now()->year;
-            })->sum(function ($row) {
-                return $row->jumlah * $row->harga_satuan;
-            });
+        $totalModalBulanIni = $allBarangMasuk->filter(function ($row) {
+            $tgl = \Carbon\Carbon::parse($row->tanggal);
+            return $tgl->month === now()->month && $tgl->year === now()->year;
+        })->sum(function ($row) {
+            return $row->jumlah_box * $row->harga_satuan;
+        });
 
-            $detailBarangMasuk = BarangMasuk::with('barang')
-                ->latest('tanggal')->latest('id')
-                ->take(30)
-                ->get();
+        $detailBarangMasuk = BarangMasuk::with('barang')
+            ->latest('tanggal')->latest('id')
+            ->take(30)
+            ->get();
 
         $recentTransaksi = $recentKeluar
             ->merge($recentMasuk)

@@ -25,18 +25,24 @@
         </div>
 
         <div>
-            <label class="block text-sm mb-1">Jumlah (pcs) <span class="text-red-500">*</span></label>
-            <input type="number" name="jumlah" min="1" value="{{ old('jumlah') }}" required
-                class="w-full border rounded px-3 py-2 text-sm @error('jumlah') border-red-500 @enderror">
-            @error('jumlah') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+            <label class="block text-sm mb-1">Jumlah Box <span class="text-red-500">*</span></label>
+            <input type="number" name="jumlah_box" id="inputBox" min="1" value="{{ old('jumlah_box') }}" required
+                class="w-full border rounded px-3 py-2 text-sm @error('jumlah_box') border-red-500 @enderror">
+            @error('jumlah_box') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
         </div>
 
         <div>
-            <label class="block text-sm mb-1">Keuntungan / pcs (Rp) <span class="text-red-500">*</span></label>
-            <input type="number" name="keuntungan" min="0" value="{{ old('keuntungan') }}" required
-                placeholder="Profit per pcs"
-                class="w-full border rounded px-3 py-2 text-sm @error('keuntungan') border-red-500 @enderror">
-            @error('keuntungan') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+            <label class="block text-sm mb-1">Total Pcs (Otomatis)</label>
+            <input type="number" name="jumlah" id="inputPcs" readonly
+                class="w-full border rounded px-3 py-2 text-sm bg-gray-100 cursor-not-allowed">
+        </div>
+
+        <div>
+            <label class="block text-sm mb-1">Harga Jual / pcs (Rp) <span class="text-red-500">*</span></label>
+            <input type="number" name="harga_jual" min="1" value="{{ old('harga_jual') }}" required
+                placeholder="Harga jual per pcs"
+                class="w-full border rounded px-3 py-2 text-sm @error('harga_jual') border-red-500 @enderror">
+            @error('harga_jual') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
         </div>
 
         <div>
@@ -92,8 +98,7 @@
                     <th class="px-4 py-3 text-left">Tanggal</th>
                     <th class="px-4 py-3 text-left">Barang</th>
                     <th class="px-4 py-3 text-right">Jumlah</th>
-                    <th class="px-4 py-3 text-right">Keuntungan</th>
-                    <th class="px-4 py-3 text-right">Total</th>
+                    <th class="px-4 py-3 text-right">Harga Jual</th>
                     <th class="px-4 py-3 text-left">Pembeli</th>
                     <th class="px-4 py-3 text-center">Status</th>
                     <th class="px-4 py-3 text-center">Aksi</th>
@@ -106,9 +111,6 @@
                         <td class="px-4 py-3">{{ $row->tanggal->format('d/m/Y') }}</td>
                         <td class="px-4 py-3 font-medium">{{ $row->barang->nama }}</td>
                         <td class="px-4 py-3 text-right">{{ number_format($row->jumlah) }} pcs</td>
-                        <td class="px-4 py-3 text-right text-emerald-700">
-                            Rp {{ number_format($row->keuntungan, 0, ',', '.') }}
-                        </td>
                         <td class="px-4 py-3 text-right font-semibold">
                             Rp {{ number_format($row->total_harga, 0, ',', '.') }}
                         </td>
@@ -129,7 +131,7 @@
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="9" class="px-4 py-8 text-center text-gray-400">Belum ada data.</td></tr>
+                    <tr><td colspan="8" class="px-4 py-8 text-center text-gray-400">Belum ada data.</td></tr>
                 @endforelse
             </tbody>
         </table>
@@ -149,6 +151,28 @@
             document.querySelector('input[name="jumlah"]').max = stok;
         }
     });
+</script>
+
+<script>
+    const dataBarang = @json($barang);
+    const selectBarang = document.querySelector('select[name="barang_id"]');
+    const inputBox = document.getElementById('inputBox');
+    const inputPcs = document.getElementById('inputPcs');
+
+    function hitungPcs() {
+        const id = selectBarang.value;
+        const box = parseInt(inputBox.value) || 0;
+        const barang = dataBarang.find(b => b.id == id);
+
+        if (barang) {
+            inputPcs.value = box * barang.pcs_per_box;
+        } else {
+            inputPcs.value = 0;
+        }
+    }
+
+    selectBarang.addEventListener('change', hitungPcs);
+    inputBox.addEventListener('input', hitungPcs);
 </script>
 @endpush
 @endsection

@@ -284,8 +284,8 @@
                         <th class="px-3 py-2 text-left">Tanggal</th>
                         <th class="px-3 py-2 text-left">Kode</th>
                         <th class="px-3 py-2 text-left">Barang</th>
-                        <th class="px-3 py-2 text-right">Qty</th>
-                        <th class="px-3 py-2 text-right">Harga/pcs</th>
+                        <th class="px-3 py-2 text-right">Jumlah Box</th> 
+                        <th class="px-3 py-2 text-right">Harga / Box</th> 
                         <th class="px-3 py-2 text-right">Total</th>
                         <th class="px-3 py-2 text-center">Status</th>
                     </tr>
@@ -301,13 +301,14 @@
                             </td>
                             <td class="px-3 py-2">{{ $m->barang->nama ?? '-' }}</td>
                             <td class="px-3 py-2 text-right whitespace-nowrap">
-                                {{ number_format($m->jumlah) }} pcs
+                                {{ number_format($m->jumlah_box) }} Box {{-- ⬅️ Ubah ke jumlah_box --}}
                             </td>
                             <td class="px-3 py-2 text-right whitespace-nowrap">
                                 Rp {{ number_format($m->harga_satuan, 0, ',', '.') }}
                             </td>
                             <td class="px-3 py-2 text-right font-semibold whitespace-nowrap">
-                                Rp {{ number_format($m->jumlah * $m->harga_satuan, 0, ',', '.') }}
+                                {{-- ⬅️ Ubah perkalian ke jumlah_box * harga_satuan --}}
+                                Rp {{ number_format($m->jumlah_box * $m->harga_satuan, 0, ',', '.') }}
                             </td>
                             <td class="px-3 py-2 text-center">
                                 @if ($m->status_pembayaran === 'lunas')
@@ -329,7 +330,8 @@
                     <tr>
                         <td colspan="5" class="px-3 py-2 text-right text-gray-700">Total {{ $detailBarangMasuk->count() }} transaksi teratas:</td>
                         <td class="px-3 py-2 text-right text-indigo-700">
-                            Rp {{ number_format($detailBarangMasuk->sum(fn($m) => $m->jumlah * $m->harga_satuan), 0, ',', '.') }}
+                            {{-- ⬅️ Ubah perkalian ke jumlah_box * harga_satuan --}}
+                            Rp {{ number_format($detailBarangMasuk->sum(fn($m) => $m->jumlah_box * $m->harga_satuan), 0, ',', '.') }}
                         </td>
                         <td class="px-3 py-2"></td>
                     </tr>

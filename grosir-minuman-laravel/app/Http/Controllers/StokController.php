@@ -28,13 +28,19 @@ class StokController extends Controller {
 
         $totalJenis       = Barang::count();
         $totalStok        = Barang::sum('stok');
+        
+        // Hitung Total Box Keseluruhan
+        $totalStokBox = Barang::all()->sum(function($row) {
+            return floor($row->stok / ($row->pcs_per_box ?: 1));
+        });
+
         $jumlahTidakAman  = Barang::where('stok', '>', 0)
-                                  ->whereColumn('stok', '<=', 'stok_minimum')->count();
+                                ->whereColumn('stok', '<=', 'stok_minimum')->count();
         $jumlahHabis      = Barang::where('stok', '<=', 0)->count();
 
         return view('stok.index', compact(
             'barang', 'search', 'filter',
-            'totalJenis', 'totalStok', 'jumlahTidakAman', 'jumlahHabis'
+            'totalJenis', 'totalStok', 'totalStokBox', 'jumlahTidakAman', 'jumlahHabis' // ⬅️ Tambah $totalStokBox
         ));
     }
 }

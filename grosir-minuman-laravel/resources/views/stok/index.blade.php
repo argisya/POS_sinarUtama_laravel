@@ -12,9 +12,11 @@
         <p class="text-xs text-gray-500 uppercase">Total Stok</p>
         <p class="text-2xl font-bold text-gray-800">{{ number_format($totalStok) }} <span class="text-sm font-normal">pcs</span></p>
     </div>
-    <div class="bg-white rounded-lg shadow p-4 border-l-4 border-amber-500">
-        <p class="text-xs text-gray-500 uppercase">Tidak Aman</p>
-        <p class="text-2xl font-bold text-amber-600">{{ number_format($jumlahTidakAman) }}</p>
+    <div class="bg-white rounded-lg shadow p-4 border-l-4 border-indigo-500">
+        <p class="text-xs text-gray-500 uppercase">Total Stok Box</p>
+        <p class="text-2xl font-bold text-indigo-600">
+            {{ number_format($totalStokBox) }} <span class="text-sm font-normal text-gray-500">Box</span>
+        </p>
     </div>
     <div class="bg-white rounded-lg shadow p-4 border-l-4 border-red-500">
         <p class="text-xs text-gray-500 uppercase">Habis</p>
@@ -56,7 +58,6 @@
                     <th class="px-4 py-3 text-left">Nama Barang</th>
                     <th class="px-4 py-3 text-right">Modal Terakhir</th>
                     <th class="px-4 py-3 text-right">Qty</th>
-                    <th class="px-4 py-3 text-center">Pcs</th>
                     <th class="px-4 py-3 text-center">Status</th>
                 </tr>
             </thead>

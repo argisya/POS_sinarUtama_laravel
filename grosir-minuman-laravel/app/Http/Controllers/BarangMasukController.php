@@ -14,20 +14,18 @@ class BarangMasukController extends Controller {
 
         $barang = Barang::orderBy('nama')->get();
 
-        // --- MENGGUNAKAN COLLECTION (ANTI GAGAL) ---
+        // --- MENGGUNAKAN COLLECTION ---
         $allBarangMasuk = BarangMasuk::all();
         
-        // Hitung Grand Total
+        // Perhitungan Grand Total: jumlah_box * harga_satuan (harga per box)
         $grandTotal = $allBarangMasuk->sum(function ($row) {
-            return $row->jumlah * $row->harga_satuan;
+            return $row->jumlah_box * $row->harga_satuan;
         });
 
-        // Hitung Lunas
         $grandTotalLunas = $allBarangMasuk->where('status_pembayaran', 'lunas')->sum(function ($row) {
-            return $row->jumlah * $row->harga_satuan;
+            return $row->jumlah_box * $row->harga_satuan;
         });
 
-        // Hitung Belum Lunas
         $grandTotalBelumLunas = $grandTotal - $grandTotalLunas;
 
         return view('barang-masuk.index', compact(
@@ -38,25 +36,31 @@ class BarangMasukController extends Controller {
 
     public function store(Request $request) {
         $validated = $request->validate([
-            'barang_id'         => 'required|exists:barang,id',
-            'jumlah'            => 'required|integer|min:1',
-            'harga_satuan'      => 'required|integer|min:0',
-            'tanggal'           => 'required|date',
+            'barang_id'            => 'required|exists:barang,id',
+            'jumlah_box'           => 'required|integer|min:1',
+            'harga_satuan'         => 'required|integer|min:1', // Ini harga per BOX
+            'tanggal'              => 'required|date',
             'tanggal_jatuh_tempo'  => 'nullable|date|after_or_equal:tanggal',
-            'supplier'          => 'nullable|string|max:100',
-            'status_pembayaran' => 'required|in:lunas,belum_lunas',
+            'supplier'             => 'nullable|string|max:100',
+            'status_pembayaran'    => 'required|in:lunas,belum_lunas',
         ]);
 
-        DB::transaction(function () use ($validated) {
+        $barang = Barang::findOrFail($validated['barang_id']);
+
+        // Hitung total pcs secara otomatis
+        $validated['jumlah'] = $validated['jumlah_box'] * $barang->pcs_per_box;
+
+        DB::transaction(function () use ($validated, $barang) {
             BarangMasuk::create($validated);
 
-            // Update stok + update modal terbaru di tabel barang
             Barang::where('id', $validated['barang_id'])
                 ->increment('stok', $validated['jumlah']);
 
             if ($validated['harga_satuan'] > 0) {
+                // Bagi harga box ke harga pcs untuk update modal di Master Barang
+                $hargaPerPcs = $validated['harga_satuan'] / $barang->pcs_per_box;
                 Barang::where('id', $validated['barang_id'])
-                    ->update(['harga' => $validated['harga_satuan']]);
+                    ->update(['harga' => (int) ceil($hargaPerPcs)]);
             }
         });
 

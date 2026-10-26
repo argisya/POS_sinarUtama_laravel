@@ -25,16 +25,22 @@
         </div>
 
         <div>
-            <label class="block text-sm mb-1">Jumlah (pcs) <span class="text-red-500">*</span></label>
-            <input type="number" name="jumlah" min="1" value="{{ old('jumlah') }}" required
-                class="w-full border rounded px-3 py-2 text-sm @error('jumlah') border-red-500 @enderror">
-            @error('jumlah') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+            <label class="block text-sm mb-1">Jumlah Box <span class="text-red-500">*</span></label>
+            <input type="number" name="jumlah_box" id="inputBox" min="1" value="{{ old('jumlah_box') }}" required
+                class="w-full border rounded px-3 py-2 text-sm @error('jumlah_box') border-red-500 @enderror">
+            @error('jumlah_box') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
         </div>
 
         <div>
-            <label class="block text-sm mb-1">Harga Satuan (Rp) <span class="text-red-500">*</span></label>
-            <input type="number" name="harga_satuan" min="0" value="{{ old('harga_satuan') }}" required
-                placeholder="Modal per pcs"
+            <label class="block text-sm mb-1">Total Pcs (Otomatis)</label>
+            <input type="number" name="jumlah" id="inputPcs" readonly
+                class="w-full border rounded px-3 py-2 text-sm bg-gray-100 cursor-not-allowed">
+        </div>
+
+        <div>
+            <label class="block text-sm mb-1">Harga / Box (Rp) <span class="text-red-500">*</span></label>
+            <input type="number" name="harga_satuan" min="1" value="{{ old('harga_satuan') }}" required
+                placeholder="Modal per box"
                 class="w-full border rounded px-3 py-2 text-sm @error('harga_satuan') border-red-500 @enderror">
             @error('harga_satuan') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
         </div>
@@ -94,8 +100,9 @@
                     <th class="px-4 py-3 text-left">Tanggal</th>
                     <th class="px-4 py-3 text-left">Jatuh Tempo</th>
                     <th class="px-4 py-3 text-left">Barang</th>
-                    <th class="px-4 py-3 text-right">Jumlah</th>
-                    <th class="px-4 py-3 text-right">Harga Satuan</th>
+                    <th class="px-4 py-3 text-right">Jumlah Box</th> 
+                    <th class="px-4 py-3 text-right">Jumlah Pcs</th> 
+                    <th class="px-4 py-3 text-right">Harga / Box</th>
                     <th class="px-4 py-3 text-right">Total</th>
                     <th class="px-4 py-3 text-left">Supplier</th>
                     <th class="px-4 py-3 text-center">Status</th>
@@ -107,14 +114,13 @@
                     <tr class="hover:bg-gray-50">
                         <td class="px-4 py-3 font-mono text-xs">{{ $row->barang->kode_barang }}</td>
                         <td class="px-4 py-3">{{ $row->tanggal->format('d/m/Y') }}</td>
+                        
+                        {{-- Tanggal Jatuh Tempo --}}
                         <td class="px-4 py-3">
                             @if ($row->tanggal_jatuh_tempo)
                                 @php
-                                    // Cek apakah belum lunas DAN sudah melewati hari ini
-                                    $isOverdue = $row->status_pembayaran === 'belum_lunas' 
-                                                && $row->tanggal_jatuh_tempo->isPast();
+                                    $isOverdue = $row->status_pembayaran === 'belum_lunas' && $row->tanggal_jatuh_tempo->isPast();
                                 @endphp
-                                
                                 <span class="{{ $isOverdue ? 'text-red-600 font-bold' : 'text-gray-700' }}">
                                     {{ $row->tanggal_jatuh_tempo->format('d/m/Y') }}
                                     @if($isOverdue) ⚠️ @endif
@@ -123,13 +129,26 @@
                                 <span class="text-gray-400">-</span>
                             @endif
                         </td>
+
                         <td class="px-4 py-3 font-medium">{{ $row->barang->nama }}</td>
-                        <td class="px-4 py-3 text-right">{{ number_format($row->jumlah) }} pcs</td>
+                        
+                        {{-- Jumlah Box --}}
+                        <td class="px-4 py-3 text-right font-semibold text-gray-700">
+                            {{ number_format($row->jumlah_box) }} Box
+                        </td>
+
+                        {{-- Jumlah Pcs --}}
+                        <td class="px-4 py-3 text-right text-gray-600">
+                            {{ number_format($row->jumlah) }} Pcs
+                        </td>
+
                         <td class="px-4 py-3 text-right">Rp {{ number_format($row->harga_satuan, 0, ',', '.') }}</td>
                         <td class="px-4 py-3 text-right font-semibold">
-                            Rp {{ number_format($row->jumlah * $row->harga_satuan, 0, ',', '.') }}
+                            Rp {{ number_format($row->jumlah_box * $row->harga_satuan, 0, ',', '.') }}
                         </td>
                         <td class="px-4 py-3">{{ $row->supplier ?? '-' }}</td>
+                        
+                        {{-- Status --}}
                         <td class="px-4 py-3 text-center">
                             @if ($row->status_pembayaran === 'lunas')
                                 <span class="px-2 py-1 text-xs rounded bg-emerald-100 text-emerald-700">Lunas</span>
@@ -137,35 +156,37 @@
                                 <span class="px-2 py-1 text-xs rounded bg-red-100 text-red-700">Belum Lunas</span>
                             @endif
                         </td>
+                        
+                        {{-- Aksi --}}
                         <td class="px-4 py-3 text-center">
                             <form method="POST" action="{{ route('barang-masuk.destroy', $row->id) }}"
-                                  onsubmit="return confirm('Yakin hapus? Stok akan dikurangi.')">
+                                onsubmit="return confirm('Yakin hapus? Stok akan dikurangi.')">
                                 @csrf @method('DELETE')
                                 <button class="text-red-600 hover:underline text-xs">Hapus</button>
                             </form>
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="10" class="px-4 py-8 text-center text-gray-400">Belum ada data.</td></tr>
+                    <tr><td colspan="11" class="px-4 py-8 text-center text-gray-400">Belum ada data.</td></tr>
                 @endforelse
             </tbody>
             <tfoot class="bg-gray-100 font-semibold text-sm">
                 <tr>
-                    <td colspan="5" class="px-4 py-3 text-right text-gray-700">Grand Total:</td>
+                    <td colspan="7" class="px-4 py-3 text-right text-gray-700">Grand Total:</td>
                     <td class="px-4 py-3 text-right text-indigo-700">
                         Rp {{ number_format($grandTotal ?? 0, 0, ',', '.') }}
                     </td>
                     <td colspan="3" class="px-4 py-3"></td>
                 </tr>
                 <tr class="text-xs">
-                    <td colspan="5" class="px-4 py-2 text-right text-gray-500">— Lunas:</td>
+                    <td colspan="7" class="px-4 py-2 text-right text-gray-500">— Lunas:</td>
                     <td class="px-4 py-2 text-right text-emerald-600">
                         Rp {{ number_format($grandTotalLunas ?? 0, 0, ',', '.') }}
                     </td>
                     <td colspan="3" class="px-4 py-2"></td>
                 </tr>
                 <tr class="text-xs">
-                    <td colspan="5" class="px-4 py-2 text-right text-gray-500">— Belum Lunas:</td>
+                    <td colspan="7" class="px-4 py-2 text-right text-gray-500">— Belum Lunas:</td>
                     <td class="px-4 py-2 text-right text-red-600">
                         Rp {{ number_format($grandTotalBelumLunas ?? 0, 0, ',', '.') }}
                     </td>
@@ -179,5 +200,29 @@
         <div class="px-6 py-4 border-t">{{ $barangMasuk->links() }}</div>
     @endif
 </div>
+
+@push('scripts')
+<script>
+    const dataBarang = @json($barang);
+    const selectBarang = document.querySelector('select[name="barang_id"]');
+    const inputBox = document.getElementById('inputBox');
+    const inputPcs = document.getElementById('inputPcs');
+
+    function hitungPcs() {
+        const id = selectBarang.value;
+        const box = parseInt(inputBox.value) || 0;
+        const barang = dataBarang.find(b => b.id == id);
+
+        if (barang) {
+            inputPcs.value = box * barang.pcs_per_box;
+        } else {
+            inputPcs.value = 0;
+        }
+    }
+
+    selectBarang.addEventListener('change', hitungPcs);
+    inputBox.addEventListener('input', hitungPcs);
+</script>
+@endpush
 
 @endsection
