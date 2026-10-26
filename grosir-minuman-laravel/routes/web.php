@@ -5,8 +5,10 @@ use App\Http\Controllers\BarangKeluarController;
 use App\Http\Controllers\StokController;
 use App\Http\Controllers\KasMasukController;
 use App\Http\Controllers\BukuTagihanController;
+use App\Http\Controllers\DashboardController;
 
-Route::get('/', fn () => redirect()->route('barang-masuk.index'));
+// ===== Dashboard =====
+Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 // Barang Masuk Routes
 Route::get('/barang-masuk', [BarangMasukController::class, 'index'])->name('barang-masuk.index');
 Route::post('/barang-masuk', [BarangMasukController::class, 'store'])->name('barang-masuk.store');
@@ -23,4 +25,5 @@ Route::post('/kas-masuk', [KasMasukController::class, 'store'])->name('kas-masuk
 Route::delete('/kas-masuk/{kasMasuk}', [KasMasukController::class, 'destroy'])->name('kas-masuk.destroy');
 // Buku Tagihan Routes
 Route::get('/buku-tagihan', [BukuTagihanController::class, 'index'])->name('buku-tagihan.index');
-Route::post('/buku-tagihan/{barangKeluar}/bayar', [BukuTagihanController::class, 'storePayment'])->name('buku-tagihan.bayar');
+Route::post('/buku-tagihan/{barangKeluar}/lunasi', [BukuTagihanController::class, 'lunasi'])
+    ->name('buku-tagihan.lunasi');

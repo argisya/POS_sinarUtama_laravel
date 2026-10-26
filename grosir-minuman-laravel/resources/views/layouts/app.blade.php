@@ -19,7 +19,7 @@
         <nav class="flex-1 p-2 space-y-1 text-sm">
             @php
                 $menu = [
-                    ['label' => 'Dashboard',     'route' => '#',                  'active' => false],
+                    ['label' => 'Dashboard',     'route' => route('dashboard'),     'active' => request()->routeIs('dashboard')],
                     ['label' => 'Barang Masuk',  'route' => route('barang-masuk.index'), 'active' => request()->routeIs('barang-masuk.*')],
                     ['label' => 'Barang Keluar', 'route' => route('barang-keluar.index'), 'active' => request()->routeIs('barang-keluar.*')],
                     ['label' => 'Stok Barang', 'route' => route('stok.index'), 'active' => request()->routeIs('stok.*')],

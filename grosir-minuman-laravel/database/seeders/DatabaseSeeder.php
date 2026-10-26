@@ -6,11 +6,11 @@ use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder {
     public function run(): void {
-        Barang::insert([
-            ['nama' => 'Aqua 600ml',        'satuan' => 'dus', 'harga' => 35000, 'stok' => 0, 'stok_minimum' => 10, 'created_at' => now(), 'updated_at' => now()],
-            ['nama' => 'Teh Pucuk 350ml',   'satuan' => 'dus', 'harga' => 40000, 'stok' => 0, 'stok_minimum' => 10, 'created_at' => now(), 'updated_at' => now()],
-            ['nama' => 'Coca Cola 390ml',   'satuan' => 'dus', 'harga' => 55000, 'stok' => 0, 'stok_minimum' => 5,  'created_at' => now(), 'updated_at' => now()],
-            ['nama' => 'Golda Coffee 200ml','satuan' => 'dus', 'harga' => 45000, 'stok' => 0, 'stok_minimum' => 5,  'created_at' => now(), 'updated_at' => now()],
+        \App\Models\Barang::insert([
+            ['kode_barang' => 'BRG-0001', 'nama' => 'Aqua 600ml',          'satuan' => 'pcs', 'harga' => 3000, 'stok' => 0, 'stok_minimum' => 5, 'created_at' => now(), 'updated_at' => now()],
+            ['kode_barang' => 'BRG-0002', 'nama' => 'Teh Pucuk 350ml',     'satuan' => 'pcs', 'harga' => 4000, 'stok' => 0, 'stok_minimum' => 5, 'created_at' => now(), 'updated_at' => now()],
+            ['kode_barang' => 'BRG-0003', 'nama' => 'Coca Cola 390ml',     'satuan' => 'pcs', 'harga' => 5500, 'stok' => 0, 'stok_minimum' => 5, 'created_at' => now(), 'updated_at' => now()],
+            ['kode_barang' => 'BRG-0004', 'nama' => 'Golda Coffee 200ml',  'satuan' => 'pcs', 'harga' => 4500, 'stok' => 0, 'stok_minimum' => 5, 'created_at' => now(), 'updated_at' => now()],
         ]);
     }
 }

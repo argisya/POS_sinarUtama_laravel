@@ -11,8 +11,7 @@ use Illuminate\Validation\ValidationException;
 class BarangKeluarController extends Controller {
     public function index() {
         $barangKeluar = BarangKeluar::with('barang')
-            ->latest('tanggal')
-            ->latest('id')
+            ->latest('tanggal')->latest('id')
             ->paginate(10);
 
         $barang = Barang::orderBy('nama')->get();
@@ -22,37 +21,38 @@ class BarangKeluarController extends Controller {
 
     public function store(Request $request) {
         $validated = $request->validate([
-            'barang_id'       => 'required|exists:barang,id',
-            'jumlah'          => 'required|integer|min:1',
-            'tanggal'         => 'required|date',
-            'pembeli'         => 'nullable|string|max:100',
-            'tipe_pembayaran' => 'required|in:cash,kredit',
-            'keterangan'      => 'nullable|string|max:255',
+            'barang_id'         => 'required|exists:barang,id',
+            'jumlah'            => 'required|integer|min:1',
+            'keuntungan'        => 'required|integer|min:0',
+            'tanggal'           => 'required|date',
+            'pembeli'           => 'nullable|string|max:100',
+            'status_pembayaran' => 'required|in:lunas,belum_lunas',
+            'keterangan'        => 'nullable|string|max:255',
         ]);
 
         $barang = Barang::findOrFail($validated['barang_id']);
 
         if ($barang->stok < $validated['jumlah']) {
             throw ValidationException::withMessages([
-                'jumlah' => "Stok tidak cukup. Stok {$barang->nama} saat ini: {$barang->stok} {$barang->satuan}.",
+                'jumlah' => "Stok tidak cukup. Stok {$barang->nama} saat ini: {$barang->stok} pcs.",
             ]);
         }
 
-        $totalHarga = $barang->harga * $validated['jumlah'];
+        // Total = (modal + keuntungan) × jumlah
+        $totalHarga = ($barang->harga + $validated['keuntungan']) * $validated['jumlah'];
 
         DB::transaction(function () use ($validated, $barang, $totalHarga) {
             $bk = BarangKeluar::create(array_merge($validated, [
                 'total_harga' => $totalHarga,
             ]));
 
-            Barang::where('id', $validated['barang_id'])
+            Barang::where('id', $barang->id)
                 ->decrement('stok', $validated['jumlah']);
 
-            if ($validated['tipe_pembayaran'] === 'cash') {
+            // Auto catat kas masuk kalau lunas
+            if ($validated['status_pembayaran'] === 'lunas') {
                 $ket = "Penjualan {$barang->nama}";
-                if (!empty($validated['pembeli'])) {
-                    $ket .= " - {$validated['pembeli']}";
-                }
+                if (!empty($validated['pembeli'])) $ket .= " - {$validated['pembeli']}";
 
                 KasMasuk::create([
                     'tanggal'          => $validated['tanggal'],
@@ -72,7 +72,6 @@ class BarangKeluarController extends Controller {
         DB::transaction(function () use ($barangKeluar) {
             Barang::where('id', $barangKeluar->barang_id)
                 ->increment('stok', $barangKeluar->jumlah);
-            // kas_masuk akan otomatis terhapus via FK cascade
             $barangKeluar->delete();
         });
 
