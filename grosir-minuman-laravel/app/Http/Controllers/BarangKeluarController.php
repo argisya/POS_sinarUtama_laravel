@@ -32,6 +32,12 @@ class BarangKeluarController extends Controller {
 
         $barang = Barang::findOrFail($validated['barang_id']);
 
+        if ($barang->harga <= 0) {
+            throw ValidationException::withMessages([
+                'barang_id' => "Barang \"{$barang->nama}\" belum pernah masuk, jadi modal belum diketahui. Catat dulu di menu Barang Masuk.",
+            ]);
+        }
+
         if ($barang->stok < $validated['jumlah']) {
             throw ValidationException::withMessages([
                 'jumlah' => "Stok tidak cukup. Stok {$barang->nama} saat ini: {$barang->stok} pcs.",

@@ -1,0 +1,8 @@
+version: 3
+agent:
+  authtoken: 3LDeS4UNqALmfp0Ht9ZUKSbff6f_7MrkeK78EuTXrnvnJQhnh
+endpoints:
+  - name: your_endpoint_name
+    url: https://neurology-unwanted-sheep.ngrok-free.dev
+    upstream:
+      url: 80

@@ -9,11 +9,17 @@ class Barang extends Model {
     protected static function boot() {
         parent::boot();
         static::creating(function ($barang) {
+            // Kode otomatis
             if (empty($barang->kode_barang)) {
                 $last = static::orderByDesc('id')->first();
                 $next = $last ? ((int) substr($last->kode_barang, 4)) + 1 : 1;
                 $barang->kode_barang = 'BRG-' . str_pad($next, 4, '0', STR_PAD_LEFT);
             }
+            // Default untuk barang baru dari Master
+            $barang->satuan       = $barang->satuan       ?? 'pcs';
+            $barang->stok_minimum = $barang->stok_minimum ?? 5;
+            $barang->harga        = $barang->harga        ?? 0;
+            $barang->stok         = $barang->stok         ?? 0;
         });
     }
 

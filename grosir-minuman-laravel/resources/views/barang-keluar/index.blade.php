@@ -61,11 +61,11 @@
             </select>
         </div>
 
-        <div class="md:col-span-4">
+        <!-- <div class="md:col-span-4">
             <label class="block text-sm mb-1">Keterangan</label>
             <input type="text" name="keterangan" value="{{ old('keterangan') }}"
                 class="w-full border rounded px-3 py-2 text-sm">
-        </div>
+        </div> -->
 
         <div class="md:col-span-6">
             <button class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2 rounded text-sm font-medium">

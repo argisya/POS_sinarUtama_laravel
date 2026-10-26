@@ -6,6 +6,7 @@ use App\Http\Controllers\StokController;
 use App\Http\Controllers\KasMasukController;
 use App\Http\Controllers\BukuTagihanController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\MasterBarangController;
 
 // ===== Dashboard =====
 Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
@@ -27,3 +28,10 @@ Route::delete('/kas-masuk/{kasMasuk}', [KasMasukController::class, 'destroy'])->
 Route::get('/buku-tagihan', [BukuTagihanController::class, 'index'])->name('buku-tagihan.index');
 Route::post('/buku-tagihan/{barangKeluar}/lunasi', [BukuTagihanController::class, 'lunasi'])
     ->name('buku-tagihan.lunasi');
+Route::delete('/buku-tagihan/{barangKeluar}', [BukuTagihanController::class, 'destroy'])
+    ->name('buku-tagihan.destroy');
+
+// Master Barang Routes
+Route::resource('master-barang', MasterBarangController::class)
+    ->except(['create', 'show', 'edit'])
+    ->parameters(['master-barang' => 'masterBarang']);

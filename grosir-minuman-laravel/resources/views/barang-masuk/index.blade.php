@@ -124,6 +124,29 @@
                     <tr><td colspan="9" class="px-4 py-8 text-center text-gray-400">Belum ada data.</td></tr>
                 @endforelse
             </tbody>
+            <tfoot class="bg-gray-100 font-semibold text-sm">
+                <tr>
+                    <td colspan="5" class="px-4 py-3 text-right text-gray-700">Grand Total:</td>
+                    <td class="px-4 py-3 text-right text-indigo-700">
+                        Rp {{ number_format($grandTotal ?? 0, 0, ',', '.') }}
+                    </td>
+                    <td colspan="3" class="px-4 py-3"></td>
+                </tr>
+                <tr class="text-xs">
+                    <td colspan="5" class="px-4 py-2 text-right text-gray-500">— Lunas:</td>
+                    <td class="px-4 py-2 text-right text-emerald-600">
+                        Rp {{ number_format($grandTotalLunas ?? 0, 0, ',', '.') }}
+                    </td>
+                    <td colspan="3" class="px-4 py-2"></td>
+                </tr>
+                <tr class="text-xs">
+                    <td colspan="5" class="px-4 py-2 text-right text-gray-500">— Belum Lunas:</td>
+                    <td class="px-4 py-2 text-right text-red-600">
+                        Rp {{ number_format($grandTotalBelumLunas ?? 0, 0, ',', '.') }}
+                    </td>
+                    <td colspan="3" class="px-4 py-2"></td>
+                </tr>
+            </tfoot>
         </table>
     </div>
 

@@ -19,12 +19,13 @@
         <nav class="flex-1 p-2 space-y-1 text-sm">
             @php
                 $menu = [
-                    ['label' => 'Dashboard',     'route' => route('dashboard'),     'active' => request()->routeIs('dashboard')],
-                    ['label' => 'Barang Masuk',  'route' => route('barang-masuk.index'), 'active' => request()->routeIs('barang-masuk.*')],
+                    ['label' => 'Dashboard',     'route' => route('dashboard'),          'active' => request()->routeIs('dashboard')],
+                    ['label' => 'Master Barang', 'route' => route('master-barang.index'), 'active' => request()->routeIs('master-barang.*')],
+                    ['label' => 'Barang Masuk',  'route' => route('barang-masuk.index'),  'active' => request()->routeIs('barang-masuk.*')],
                     ['label' => 'Barang Keluar', 'route' => route('barang-keluar.index'), 'active' => request()->routeIs('barang-keluar.*')],
-                    ['label' => 'Stok Barang', 'route' => route('stok.index'), 'active' => request()->routeIs('stok.*')],
-                    ['label' => 'Kas Masuk', 'route' => route('kas-masuk.index'), 'active' => request()->routeIs('kas-masuk.*')],
-                    ['label' => 'Buku Tagihan', 'route' => route('buku-tagihan.index'), 'active' => request()->routeIs('buku-tagihan.*')],
+                    ['label' => 'Stok Barang',   'route' => route('stok.index'),          'active' => request()->routeIs('stok.*')],
+                    ['label' => 'Kas Masuk',     'route' => route('kas-masuk.index'),     'active' => request()->routeIs('kas-masuk.*')],
+                    ['label' => 'Buku Tagihan',  'route' => route('buku-tagihan.index'),  'active' => request()->routeIs('buku-tagihan.*')],
                 ];
             @endphp
             @foreach ($menu as $item)

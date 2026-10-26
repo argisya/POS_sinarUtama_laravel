@@ -14,7 +14,26 @@ class BarangMasukController extends Controller {
 
         $barang = Barang::orderBy('nama')->get();
 
-        return view('barang-masuk.index', compact('barangMasuk', 'barang'));
+        // --- MENGGUNAKAN COLLECTION (ANTI GAGAL) ---
+        $allBarangMasuk = BarangMasuk::all();
+        
+        // Hitung Grand Total
+        $grandTotal = $allBarangMasuk->sum(function ($row) {
+            return $row->jumlah * $row->harga_satuan;
+        });
+
+        // Hitung Lunas
+        $grandTotalLunas = $allBarangMasuk->where('status_pembayaran', 'lunas')->sum(function ($row) {
+            return $row->jumlah * $row->harga_satuan;
+        });
+
+        // Hitung Belum Lunas
+        $grandTotalBelumLunas = $grandTotal - $grandTotalLunas;
+
+        return view('barang-masuk.index', compact(
+            'barangMasuk', 'barang',
+            'grandTotal', 'grandTotalLunas', 'grandTotalBelumLunas'
+        ));
     }
 
     public function store(Request $request) {

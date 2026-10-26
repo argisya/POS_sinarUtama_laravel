@@ -54,7 +54,7 @@
                 <tr>
                     <th class="px-4 py-3 text-left">Kode</th>
                     <th class="px-4 py-3 text-left">Nama Barang</th>
-                    <th class="px-4 py-3 text-right">Harga Modal</th>
+                    <th class="px-4 py-3 text-right">Modal Terakhir</th>
                     <th class="px-4 py-3 text-right">Qty</th>
                     <th class="px-4 py-3 text-center">Pcs</th>
                     <th class="px-4 py-3 text-center">Status</th>
@@ -79,7 +79,13 @@
                     <tr class="hover:bg-gray-50 {{ $rowBg }}">
                         <td class="px-4 py-3 font-mono text-xs">{{ $row->kode_barang }}</td>
                         <td class="px-4 py-3 font-medium">{{ $row->nama }}</td>
-                        <td class="px-4 py-3 text-right">Rp {{ number_format($row->harga, 0, ',', '.') }}</td>
+                        <td class="px-4 py-3 text-right">
+                            @if ($row->harga > 0)
+                                Rp {{ number_format($row->harga, 0, ',', '.') }}
+                            @else
+                                <span class="text-xs text-gray-400">belum ada</span>
+                            @endif
+                        </td>
                         <td class="px-4 py-3 text-right font-semibold">{{ number_format($row->stok) }}</td>
                         <td class="px-4 py-3 text-center text-gray-600">{{ $row->satuan }}</td>
                         <td class="px-4 py-3 text-center">

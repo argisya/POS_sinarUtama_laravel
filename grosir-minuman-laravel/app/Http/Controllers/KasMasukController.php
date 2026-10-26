@@ -51,12 +51,32 @@ class KasMasukController extends Controller {
     }
 
     public function destroy(KasMasuk $kasMasuk) {
+    // Auto dari penjualan tunai → tidak bisa dihapus dari sini
         if ($kasMasuk->sumber === 'penjualan_tunai') {
             return redirect()->route('kas-masuk.index')
-                ->with('error', 'Kas dari penjualan tunai harus dihapus lewat menu Barang Keluar.');
+                ->with('error', 'Kas dari penjualan tunai harus dihapus lewat menu Buku Tagihan.');
         }
 
-        $kasMasuk->delete();
+        \Illuminate\Support\Facades\DB::transaction(function () use ($kasMasuk) {
+            // Kalau pelunasan → kembalikan status transaksi jadi belum_lunas
+            if ($kasMasuk->sumber === 'pelunasan_tagihan' && $kasMasuk->barang_keluar_id) {
+                $bk = $kasMasuk->barangKeluar;
+
+                if ($bk) {
+                    // Cek apakah masih ada pelunasan lain (defensif)
+                    $masihAda = KasMasuk::where('barang_keluar_id', $bk->id)
+                        ->where('sumber', 'pelunasan_tagihan')
+                        ->where('id', '!=', $kasMasuk->id)
+                        ->exists();
+
+                    if (!$masihAda) {
+                        $bk->update(['status_pembayaran' => 'belum_lunas']);
+                    }
+                }
+            }
+
+            $kasMasuk->delete();
+        });
 
         return redirect()->route('kas-masuk.index')
             ->with('success', 'Kas masuk berhasil dihapus.');

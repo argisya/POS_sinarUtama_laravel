@@ -83,10 +83,11 @@
                                 <span class="px-2 py-1 text-xs rounded bg-red-100 text-red-700">Belum Lunas</span>
                             @endif
                         </td>
-                        <td class="px-4 py-3 text-center">
+                        <td class="px-4 py-3 text-center whitespace-nowrap">
                             @if ($row->status_pembayaran === 'belum_lunas')
                                 <form method="POST" action="{{ route('buku-tagihan.lunasi', $row->id) }}"
-                                      onsubmit="return confirm('Tandai lunas & catat ke kas masuk?')">
+                                    class="inline"
+                                    onsubmit="return confirm('Tandai lunas & catat ke kas masuk?')">
                                     @csrf
                                     <input type="hidden" name="tanggal" value="{{ date('Y-m-d') }}">
                                     <button class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1 rounded text-xs">
@@ -94,8 +95,21 @@
                                     </button>
                                 </form>
                             @else
-                                <span class="text-xs text-gray-400">✓ Lunas</span>
+                                <span class="text-xs text-emerald-600 font-medium mr-2">✓ Lunas</span>
                             @endif
+
+                            <form method="POST" action="{{ route('buku-tagihan.destroy', $row->id) }}"
+                                class="inline"
+                                onsubmit="return confirm(
+                                    'Hapus transaksi {{ $row->barang->kode_barang }}?\n\n' +
+                                    '• Stok {{ $row->barang->nama }} akan dikembalikan (+{{ $row->jumlah }} pcs)\n' +
+                                    '• Kas masuk terkait akan ikut terhapus\n' +
+                                    '{{ $row->status_pembayaran === 'lunas' ? '• Status lunas akan hilang\n' : '' }}' +
+                                    '\nLanjutkan?'
+                                )">
+                                @csrf @method('DELETE')
+                                <button class="text-red-600 hover:underline text-xs">Hapus</button>
+                            </form>
                         </td>
                     </tr>
                 @empty

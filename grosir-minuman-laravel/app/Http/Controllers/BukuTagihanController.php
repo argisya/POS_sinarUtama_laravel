@@ -59,4 +59,18 @@ class BukuTagihanController extends Controller {
         return redirect()->route('buku-tagihan.index')
             ->with('success', 'Tagihan berhasil dilunasi & kas masuk tercatat.');
     }
+
+    public function destroy(BarangKeluar $barangKeluar) {
+        \Illuminate\Support\Facades\DB::transaction(function () use ($barangKeluar) {
+            // Kembalikan stok
+            \App\Models\Barang::where('id', $barangKeluar->barang_id)
+                ->increment('stok', $barangKeluar->jumlah);
+
+            // FK cascade otomatis hapus semua kas_masuk terkait
+            $barangKeluar->delete();
+        });
+
+        return redirect()->route('buku-tagihan.index')
+            ->with('success', 'Transaksi berhasil dihapus, stok dikembalikan, dan kas masuk terkait ikut terhapus.');
+    }
 }

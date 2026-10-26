@@ -15,9 +15,7 @@ class DashboardController extends Controller {
 
         $kasHariIni = KasMasuk::whereDate('tanggal', today())->sum('jumlah');
 
-        // Piutang = total kredit - total pelunasan tagihan
-        $totalKredit   = BarangKeluar::where('tipe_pembayaran', 'kredit')->sum('total_harga');
-        $totalLunas    = KasMasuk::where('sumber', 'pelunasan_tagihan')->sum('jumlah');
+        // Piutang = total transaksi yang belum lunas
         $totalPiutang = BarangKeluar::where('status_pembayaran', 'belum_lunas')->sum('total_harga');
 
         $stokMenipis = Barang::whereColumn('stok', '<=', 'stok_minimum')
@@ -58,7 +56,7 @@ class DashboardController extends Controller {
                 'jumlah'     => $r->jumlah,
                 'satuan'     => $r->barang->satuan ?? '',
                 'total'      => $r->total_harga,
-                'pembayaran' => $r->status_pembayaran,
+                'pembayaran' => $r->status_pembayaran,   // ⬅️ kolom baru
             ])
             ->toBase();   // ⬅️ convert ke base Collection
 
@@ -76,6 +74,31 @@ class DashboardController extends Controller {
             ])
             ->toBase();   // ⬅️ convert ke base Collection
 
+        // --- MENGGUNAKAN COLLECTION (ANTI GAGAL) ---
+            $allBarangMasuk = BarangMasuk::all();
+
+            $totalModal = $allBarangMasuk->sum(function ($row) {
+                return $row->jumlah * $row->harga_satuan;
+            });
+
+            $totalModalLunas = $allBarangMasuk->where('status_pembayaran', 'lunas')->sum(function ($row) {
+                return $row->jumlah * $row->harga_satuan;
+            });
+
+            $totalModalBelumLunas = $totalModal - $totalModalLunas;
+
+            $totalModalBulanIni = $allBarangMasuk->filter(function ($row) {
+                $tgl = \Carbon\Carbon::parse($row->tanggal);
+                return $tgl->month === now()->month && $tgl->year === now()->year;
+            })->sum(function ($row) {
+                return $row->jumlah * $row->harga_satuan;
+            });
+
+            $detailBarangMasuk = BarangMasuk::with('barang')
+                ->latest('tanggal')->latest('id')
+                ->take(30)
+                ->get();
+
         $recentTransaksi = $recentKeluar
             ->merge($recentMasuk)
             ->sortByDesc(fn ($t) => \Carbon\Carbon::parse($t['tanggal'])->timestamp)
@@ -92,7 +115,9 @@ class DashboardController extends Controller {
             'penjualanHariIni', 'kasHariIni', 'totalPiutang',
             'stokMenipis', 'stokHabis',
             'chartLabels', 'chartPenjualan', 'totalMingguIni',
-            'recentTransaksi', 'barangKritis'
+            'recentTransaksi', 'barangKritis',
+            'totalModal', 'totalModalBulanIni', 'detailBarangMasuk',
+            'totalModalLunas', 'totalModalBelumLunas' 
         ));
     }
 }

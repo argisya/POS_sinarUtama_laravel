@@ -172,14 +172,13 @@
                             @endif
                         </td>
                         <td class="px-4 py-3 text-center">
-                            @if ($row->barang_keluar_id)
-                                <span class="text-xs text-gray-300" title="Hapus lewat menu Barang Keluar">—</span>
+                            @if ($row->sumber === 'penjualan_tunai')
+                                <span class="text-xs text-gray-400" title="Hapus lewat menu Buku Tagihan">🔒 Terkunci</span>
                             @else
-                                <form method="POST"
-                                      action="{{ route('kas-masuk.destroy', $row->id) }}"
-                                      onsubmit="return confirm('Yakin hapus catatan kas ini?')">
-                                    @csrf
-                                    @method('DELETE')
+                                <form method="POST" action="{{ route('kas-masuk.destroy', $row->id) }}"
+                                    class="inline"
+                                    onsubmit="return confirm('Yakin hapus catatan kas ini?\n\n{{ $row->sumber === 'pelunasan_tagihan' ? 'Status transaksi akan kembali menjadi BELUM LUNAS.' : '' }}')">
+                                    @csrf @method('DELETE')
                                     <button class="text-red-600 hover:underline text-xs">Hapus</button>
                                 </form>
                             @endif

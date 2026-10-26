@@ -12,8 +12,7 @@
 </div>
 
 {{-- ===== 4 Kartu Metrik Utama ===== --}}
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
     {{-- Penjualan Hari Ini --}}
     <div class="bg-white rounded-lg shadow p-5 border-l-4 border-emerald-500">
         <div class="flex items-center justify-between">
@@ -69,6 +68,23 @@
             <div class="text-3xl">📦</div>
         </div>
     </div>
+    {{-- Total Modal Pembelian (Barang Masuk) --}}
+<div class="bg-white rounded-lg shadow p-5 border-l-4 border-indigo-500 cursor-pointer hover:shadow-lg hover:-translate-y-0.5 transition-transform"
+     onclick="document.getElementById('modalBarangMasuk').showModal()"
+     title="Klik untuk lihat detail barang masuk">
+    <div class="flex items-center justify-between">
+        <div>
+            <p class="text-xs text-gray-500 uppercase tracking-wide">Total Modal Pembelian</p>
+            <p class="text-2xl font-bold text-indigo-700 mt-1">
+                Rp {{ number_format($totalModal, 0, ',', '.') }}
+            </p>
+            <p class="text-xs text-gray-400 mt-1">
+                Klik untuk detail →
+            </p>
+        </div>
+        <div class="text-3xl">🛒</div>
+    </div>
+</div>
 </div>
 
 {{-- ===== Baris 2: Grafik + Stok Kritis ===== --}}
@@ -160,10 +176,10 @@
                             <td class="py-2">
                                 @if ($t['tipe'] === 'masuk')
                                     <span class="px-2 py-1 text-xs rounded bg-blue-100 text-blue-700">Masuk</span>
-                                @elseif ($t['pembayaran'] === 'kredit')
-                                    <span class="px-2 py-1 text-xs rounded bg-amber-100 text-amber-700">Kredit</span>
+                                @elseif ($t['pembayaran'] === 'belum_lunas')
+                                    <span class="px-2 py-1 text-xs rounded bg-red-100 text-red-700">Belum Lunas</span>
                                 @else
-                                    <span class="px-2 py-1 text-xs rounded bg-emerald-100 text-emerald-700">Cash</span>
+                                    <span class="px-2 py-1 text-xs rounded bg-emerald-100 text-emerald-700">Lunas</span>
                                 @endif
                             </td>
                             <td class="py-2 text-gray-800">{{ $t['barang'] }}</td>
@@ -217,6 +233,113 @@
         </div>
     </div>
 </div>
+
+{{-- ===== Modal Detail Barang Masuk ===== --}}
+<dialog id="modalBarangMasuk"
+    class="rounded-lg shadow-2xl backdrop:bg-black/50 p-0 w-full max-w-3xl">
+    <div class="p-6">
+
+        {{-- Header --}}
+        <div class="flex items-start justify-between mb-4">
+            <div>
+                <h3 class="text-lg font-semibold text-gray-800">Detail Barang Masuk — Modal Pembelian</h3>
+                <div class="text-sm text-gray-600 mt-2 space-y-0.5">
+                    <p>
+                        Total seluruh:
+                        <b class="text-indigo-600">Rp {{ number_format($totalModal, 0, ',', '.') }}</b>
+                    </p>
+                    <p class="text-xs">
+                        — Lunas:
+                        <b class="text-emerald-600">Rp {{ number_format($totalModalLunas, 0, ',', '.') }}</b>
+                        · Belum Lunas:
+                        <b class="text-red-600">Rp {{ number_format($totalModalBelumLunas, 0, ',', '.') }}</b>
+                    </p>
+                    <p>
+                        Bulan ini ({{ now()->translatedFormat('F Y') }}):
+                        <b class="text-emerald-600">Rp {{ number_format($totalModalBulanIni, 0, ',', '.') }}</b>
+                    </p>
+                </div>
+            </div>
+            <button type="button"
+                onclick="document.getElementById('modalBarangMasuk').close()"
+                class="text-gray-400 hover:text-gray-700 text-2xl leading-none -mt-1">×</button>
+        </div>
+
+        {{-- Tabel --}}
+        <div class="overflow-x-auto max-h-96 overflow-y-auto border rounded">
+            <table class="w-full text-sm">
+                <thead class="bg-gray-50 text-gray-600 uppercase text-xs sticky top-0 z-10">
+                    <tr>
+                        <th class="px-3 py-2 text-left">Tanggal</th>
+                        <th class="px-3 py-2 text-left">Kode</th>
+                        <th class="px-3 py-2 text-left">Barang</th>
+                        <th class="px-3 py-2 text-right">Qty</th>
+                        <th class="px-3 py-2 text-right">Harga/pcs</th>
+                        <th class="px-3 py-2 text-right">Total</th>
+                        <th class="px-3 py-2 text-center">Status</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y">
+                    @forelse ($detailBarangMasuk as $m)
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-3 py-2 text-xs whitespace-nowrap">
+                                {{ $m->tanggal->format('d/m/Y') }}
+                            </td>
+                            <td class="px-3 py-2 font-mono text-xs">
+                                {{ $m->barang->kode_barang ?? '-' }}
+                            </td>
+                            <td class="px-3 py-2">{{ $m->barang->nama ?? '-' }}</td>
+                            <td class="px-3 py-2 text-right whitespace-nowrap">
+                                {{ number_format($m->jumlah) }} pcs
+                            </td>
+                            <td class="px-3 py-2 text-right whitespace-nowrap">
+                                Rp {{ number_format($m->harga_satuan, 0, ',', '.') }}
+                            </td>
+                            <td class="px-3 py-2 text-right font-semibold whitespace-nowrap">
+                                Rp {{ number_format($m->jumlah * $m->harga_satuan, 0, ',', '.') }}
+                            </td>
+                            <td class="px-3 py-2 text-center">
+                                @if ($m->status_pembayaran === 'lunas')
+                                    <span class="px-1.5 py-0.5 text-xs rounded bg-emerald-100 text-emerald-700">Lunas</span>
+                                @else
+                                    <span class="px-1.5 py-0.5 text-xs rounded bg-red-100 text-red-700">Belum</span>
+                                @endif
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="7" class="px-3 py-6 text-center text-gray-400">
+                                Belum ada transaksi barang masuk.
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+                <tfoot class="bg-gray-50 font-semibold text-sm border-t-2 border-gray-300">
+                    <tr>
+                        <td colspan="5" class="px-3 py-2 text-right text-gray-700">Total {{ $detailBarangMasuk->count() }} transaksi teratas:</td>
+                        <td class="px-3 py-2 text-right text-indigo-700">
+                            Rp {{ number_format($detailBarangMasuk->sum(fn($m) => $m->jumlah * $m->harga_satuan), 0, ',', '.') }}
+                        </td>
+                        <td class="px-3 py-2"></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        {{-- Footer --}}
+        <div class="mt-4 flex items-center justify-between">
+            <a href="{{ route('barang-masuk.index') }}"
+               class="text-sm text-indigo-600 hover:underline">
+                Lihat semua di menu Barang Masuk →
+            </a>
+            <button type="button"
+                onclick="document.getElementById('modalBarangMasuk').close()"
+                class="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded text-sm">
+                Tutup
+            </button>
+        </div>
+    </div>
+</dialog>
 
 {{-- Chart.js --}}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
