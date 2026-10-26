@@ -42,6 +42,7 @@ class BarangMasukController extends Controller {
             'jumlah'            => 'required|integer|min:1',
             'harga_satuan'      => 'required|integer|min:0',
             'tanggal'           => 'required|date',
+            'tanggal_jatuh_tempo'  => 'nullable|date|after_or_equal:tanggal',
             'supplier'          => 'nullable|string|max:100',
             'status_pembayaran' => 'required|in:lunas,belum_lunas',
         ]);

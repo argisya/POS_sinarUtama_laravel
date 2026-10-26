@@ -12,7 +12,7 @@
 </div>
 
 {{-- ===== 4 Kartu Metrik Utama ===== --}}
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-6">
     {{-- Penjualan Hari Ini --}}
     <div class="bg-white rounded-lg shadow p-5 border-l-4 border-emerald-500">
         <div class="flex items-center justify-between">
@@ -39,60 +39,72 @@
         </div>
     </div>
 
-    {{-- Piutang --}}
+     {{-- Total Piutang (Barang Masuk Belum Lunas) --}}
     <div class="bg-white rounded-lg shadow p-5 border-l-4 border-red-500">
         <div class="flex items-center justify-between">
             <div>
                 <p class="text-xs text-gray-500 uppercase tracking-wide">Total Piutang</p>
-                <p class="text-2xl font-bold text-red-600 mt-1">
-                    Rp {{ number_format($totalPiutang, 0, ',', '.') }}
+                <p class="text-xl font-bold text-red-600 mt-1">
+                    Rp {{ number_format($totalPiutang ?? 0, 0, ',', '.') }}
                 </p>
             </div>
             <div class="text-3xl">📒</div>
         </div>
     </div>
 
-    {{-- Stok --}}
-    <div class="bg-white rounded-lg shadow p-5 border-l-4 border-amber-500">
+    {{-- Total Utang (Barang Keluar Belum Lunas) --}}
+    <div class="bg-white rounded-lg shadow p-5 border-l-4 border-orange-500">
         <div class="flex items-center justify-between">
             <div>
-                <p class="text-xs text-gray-500 uppercase tracking-wide">Stok Perlu Perhatian</p>
-                <p class="text-2xl font-bold text-amber-600 mt-1">
-                    {{ $stokMenipis + $stokHabis }}
-                    <span class="text-sm font-normal text-gray-500">barang</span>
-                </p>
-                <p class="text-xs text-gray-400 mt-1">
-                    {{ $stokMenipis }} menipis · {{ $stokHabis }} habis
+                <p class="text-xs text-gray-500 uppercase tracking-wide">Total Utang</p>
+                <p class="text-xl font-bold text-orange-600 mt-1">
+                    Rp {{ number_format($totalUtang ?? 0, 0, ',', '.') }}
                 </p>
             </div>
-            <div class="text-3xl">📦</div>
+            <div class="text-3xl">💳</div>
+        </div>
+    </div>
+
+    {{-- Total Keuntungan --}}
+    <div class="bg-white rounded-lg shadow p-5 border-l-4 border-emerald-500">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-xs text-gray-500 uppercase tracking-wide">Total Keuntungan</p>
+                <p class="text-xl font-bold text-emerald-600 mt-1">
+                    Rp {{ number_format($totalKeuntungan ?? 0, 0, ',', '.') }}
+                </p>
+                <p class="text-xs text-gray-400 mt-1">
+                    Dari transaksi lunas
+                </p>
+            </div>
+            <div class="text-3xl">📈</div>
         </div>
     </div>
     {{-- Total Modal Pembelian (Barang Masuk) --}}
-<div class="bg-white rounded-lg shadow p-5 border-l-4 border-indigo-500 cursor-pointer hover:shadow-lg hover:-translate-y-0.5 transition-transform"
-     onclick="document.getElementById('modalBarangMasuk').showModal()"
-     title="Klik untuk lihat detail barang masuk">
-    <div class="flex items-center justify-between">
-        <div>
-            <p class="text-xs text-gray-500 uppercase tracking-wide">Total Modal Pembelian</p>
-            <p class="text-2xl font-bold text-indigo-700 mt-1">
-                Rp {{ number_format($totalModal, 0, ',', '.') }}
-            </p>
-            <p class="text-xs text-gray-400 mt-1">
-                Klik untuk detail →
-            </p>
+    <div class="bg-white rounded-lg shadow p-5 border-l-4 border-indigo-500 cursor-pointer hover:shadow-lg hover:-translate-y-0.5 transition-transform"
+        onclick="document.getElementById('modalBarangMasuk').showModal()"
+        title="Klik untuk lihat detail barang masuk">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-xs text-gray-500 uppercase tracking-wide">Total Modal Pembelian</p>
+                <p class="text-2xl font-bold text-indigo-700 mt-1">
+                    Rp {{ number_format($totalModal, 0, ',', '.') }}
+                </p>
+                <p class="text-xs text-gray-400 mt-1">
+                    Klik untuk detail →
+                </p>
+            </div>
+            <div class="text-3xl">🛒</div>
         </div>
-        <div class="text-3xl">🛒</div>
     </div>
 </div>
-</div>
 
-{{-- ===== Baris 2: Grafik + Stok Kritis ===== --}}
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+{{-- ===== Baris Grafik  ===== --}}
+<div class="grid grid-cols-1 rounded-lg p-6 mb-6">
 
     {{-- Grafik 7 Hari --}}
     <div class="bg-white rounded-lg shadow p-5 lg:col-span-2">
-        <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center justify-between mb-4 pb-3 border-b">
             <div>
                 <h3 class="font-semibold text-gray-700">Penjualan 7 Hari Terakhir</h3>
                 <p class="text-xs text-gray-500 mt-1">
@@ -113,44 +125,70 @@
             </p>
         @endif
     </div>
-
-    {{-- Stok Kritis --}}
-    <div class="bg-white rounded-lg shadow p-5">
-        <div class="flex items-center justify-between mb-3">
-            <h3 class="font-semibold text-gray-700">Stok Perlu Dipesan</h3>
-            <a href="{{ route('stok.index') }}" class="text-xs text-emerald-600 hover:underline">
-                Lihat semua →
+</div>
+{{-- ===== Baris 2: Pengingat Jatuh Tempo (Full Width) ===== --}}
+<div class="grid grid-cols-1 rounded-lg p-6 mb-6">
+    <div class="bg-white rounded-lg shadow p-6 mb-6">
+        <div class="flex items-center justify-between mb-4 pb-3 border-b">
+            <h3 class="font-semibold text-gray-700 text-lg">Pengingat Jatuh Tempo</h3>
+            <a href="{{ route('barang-masuk.index') }}" class="text-sm text-red-600 hover:underline">
+                Lihat Semua di Barang Masuk →
             </a>
         </div>
-        @forelse ($barangKritis as $b)
-            @php
-                $isHabis = $b->stok <= 0;
-            @endphp
-            <div class="flex items-center justify-between py-2 border-b last:border-0">
-                <div class="min-w-0 flex-1">
-                    <p class="text-sm font-medium text-gray-800 truncate">{{ $b->nama }}</p>
-                    <p class="text-xs text-gray-500">
-                        Stok: <b class="{{ $isHabis ? 'text-red-600' : 'text-amber-600' }}">
-                            {{ $b->stok }} {{ $b->satuan }}
-                        </b>
-                        / min {{ $b->stok_minimum }}
-                    </p>
+        
+        {{-- Menggunakan grid 2 kolom agar jika datanya banyak, tampilannya rapi menyamping --}}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2">
+            @forelse ($reminders as $rem)
+                @php
+                    $diff = now()->startOfDay()->diffInDays($rem->tanggal_jatuh_tempo->startOfDay(), false);
+                    $isOverdue = $diff < 0;
+                    $isToday = $diff === 0;
+                @endphp
+                <div class="flex items-center justify-between py-3 border-b border-gray-100 last:border-0 hover:bg-gray-50 px-2 -mx-2 rounded transition">
+                    <div class="min-w-0 flex-1 pr-4">
+                        <p class="text-sm font-bold text-gray-800 truncate" title="{{ $rem->barang->nama ?? '-' }}">
+                            {{ $rem->barang->nama ?? '-' }}
+                        </p>
+                        <div class="flex items-center gap-2 mt-1">
+                            <p class="text-xs text-gray-500 whitespace-nowrap">
+                                Jatuh Tempo: <b>{{ $rem->tanggal_jatuh_tempo->format('d/m/Y') }}</b>
+                            </p>
+                            <span class="text-gray-300 text-xs">•</span>
+                            <p class="text-xs text-gray-500 truncate">
+                                Supplier: {{ $rem->supplier ?? '-' }}
+                            </p>
+                        </div>
+                    </div>
+                    
+                    {{-- Badge Waktu --}}
+                    <div class="text-right whitespace-nowrap">
+                        @if ($isOverdue)
+                            <span class="px-3 py-1 text-xs rounded-md bg-red-100 text-red-700 font-bold border border-red-200">
+                                Telat {{ abs($diff) }} hr
+                            </span>
+                        @elseif ($isToday)
+                            <span class="px-3 py-1 text-xs rounded-md bg-orange-100 text-orange-700 font-bold border border-orange-200">
+                                Hari Ini!
+                            </span>
+                        @else
+                            <span class="px-3 py-1 text-xs rounded-md bg-blue-50 text-blue-700 font-medium border border-blue-100">
+                                {{ $diff }} hr lagi
+                            </span>
+                        @endif
+                    </div>
                 </div>
-                <span class="ml-2 px-2 py-1 text-xs rounded whitespace-nowrap
-                    {{ $isHabis ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700' }}">
-                    {{ $isHabis ? 'Habis' : 'Menipis' }}
-                </span>
-            </div>
-        @empty
-            <p class="text-sm text-gray-400 text-center py-6">
-                ✓ Semua stok aman
-            </p>
-        @endforelse
+            @empty
+                <div class="col-span-1 md:col-span-2 py-8 text-center">
+                    <span class="text-4xl mb-2 block">✓</span>
+                    <p class="text-sm text-gray-400">Tidak ada tagihan yang mendekati jatuh tempo.</p>
+                </div>
+            @endforelse
+        </div>
     </div>
 </div>
 
 {{-- ===== Baris 3: Transaksi Terbaru + Shortcut ===== --}}
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+<div class="grid grid-cols-1 rounded-lg p-6 mb-6">
 
     {{-- Transaksi Terbaru --}}
     <div class="bg-white rounded-lg shadow p-5 lg:col-span-2">
@@ -203,33 +241,6 @@
                     @endforelse
                 </tbody>
             </table>
-        </div>
-    </div>
-
-    {{-- Shortcut Aksi Cepat --}}
-    <div class="bg-white rounded-lg shadow p-5">
-        <h3 class="font-semibold text-gray-700 mb-4">Aksi Cepat</h3>
-        <div class="space-y-2">
-            <a href="{{ route('barang-masuk.index') }}"
-               class="flex items-center gap-3 px-4 py-3 rounded-lg bg-blue-50 hover:bg-blue-100 transition">
-                <span class="text-xl">📥</span>
-                <span class="text-sm font-medium text-blue-700">Catat Barang Masuk</span>
-            </a>
-            <a href="{{ route('barang-keluar.index') }}"
-               class="flex items-center gap-3 px-4 py-3 rounded-lg bg-emerald-50 hover:bg-emerald-100 transition">
-                <span class="text-xl">📤</span>
-                <span class="text-sm font-medium text-emerald-700">Catat Barang Keluar</span>
-            </a>
-            <a href="{{ route('kas-masuk.index') }}"
-               class="flex items-center gap-3 px-4 py-3 rounded-lg bg-indigo-50 hover:bg-indigo-100 transition">
-                <span class="text-xl">💵</span>
-                <span class="text-sm font-medium text-indigo-700">Catat Kas Masuk</span>
-            </a>
-            <a href="{{ route('buku-tagihan.index') }}"
-               class="flex items-center gap-3 px-4 py-3 rounded-lg bg-red-50 hover:bg-red-100 transition">
-                <span class="text-xl">📒</span>
-                <span class="text-sm font-medium text-red-700">Lihat Buku Tagihan</span>
-            </a>
         </div>
     </div>
 </div>

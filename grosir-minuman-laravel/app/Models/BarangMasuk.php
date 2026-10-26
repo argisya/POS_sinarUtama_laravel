@@ -6,9 +6,13 @@ class BarangMasuk extends Model {
     protected $table = 'barang_masuk';
     protected $fillable = [
         'barang_id', 'jumlah', 'harga_satuan', 'tanggal',
+        'tanggal_jatuh_tempo',
         'supplier', 'status_pembayaran',
     ];
-    protected $casts = ['tanggal' => 'date'];
+    protected $casts = [
+        'tanggal' => 'date',
+        'tanggal_jatuh_tempo' => 'date',
+        ];
 
     public function barang() {
         return $this->belongsTo(Barang::class);

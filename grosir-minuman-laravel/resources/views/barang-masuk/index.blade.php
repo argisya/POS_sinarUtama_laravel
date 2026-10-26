@@ -47,6 +47,14 @@
         </div>
 
         <div>
+            <label class="block text-sm mb-1">Jatuh Tempo</label>
+            <input type="date" name="tanggal_jatuh_tempo" value="{{ old('tanggal_jatuh_tempo') }}"
+                class="w-full border rounded px-3 py-2 text-sm @error('tanggal_jatuh_tempo') border-red-500 @enderror">
+            <p class="text-[10px] text-gray-500 mt-1">Kosongkan jika langsung lunas</p>
+            @error('tanggal_jatuh_tempo') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+        </div>
+
+        <div>
             <label class="block text-sm mb-1">Status Bayar <span class="text-red-500">*</span></label>
             <select name="status_pembayaran" required
                 class="w-full border rounded px-3 py-2 text-sm @error('status_pembayaran') border-red-500 @enderror">
@@ -84,6 +92,7 @@
                 <tr>
                     <th class="px-4 py-3 text-left">Kode</th>
                     <th class="px-4 py-3 text-left">Tanggal</th>
+                    <th class="px-4 py-3 text-left">Jatuh Tempo</th>
                     <th class="px-4 py-3 text-left">Barang</th>
                     <th class="px-4 py-3 text-right">Jumlah</th>
                     <th class="px-4 py-3 text-right">Harga Satuan</th>
@@ -98,6 +107,22 @@
                     <tr class="hover:bg-gray-50">
                         <td class="px-4 py-3 font-mono text-xs">{{ $row->barang->kode_barang }}</td>
                         <td class="px-4 py-3">{{ $row->tanggal->format('d/m/Y') }}</td>
+                        <td class="px-4 py-3">
+                            @if ($row->tanggal_jatuh_tempo)
+                                @php
+                                    // Cek apakah belum lunas DAN sudah melewati hari ini
+                                    $isOverdue = $row->status_pembayaran === 'belum_lunas' 
+                                                && $row->tanggal_jatuh_tempo->isPast();
+                                @endphp
+                                
+                                <span class="{{ $isOverdue ? 'text-red-600 font-bold' : 'text-gray-700' }}">
+                                    {{ $row->tanggal_jatuh_tempo->format('d/m/Y') }}
+                                    @if($isOverdue) ⚠️ @endif
+                                </span>
+                            @else
+                                <span class="text-gray-400">-</span>
+                            @endif
+                        </td>
                         <td class="px-4 py-3 font-medium">{{ $row->barang->nama }}</td>
                         <td class="px-4 py-3 text-right">{{ number_format($row->jumlah) }} pcs</td>
                         <td class="px-4 py-3 text-right">Rp {{ number_format($row->harga_satuan, 0, ',', '.') }}</td>
@@ -121,7 +146,7 @@
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="9" class="px-4 py-8 text-center text-gray-400">Belum ada data.</td></tr>
+                    <tr><td colspan="10" class="px-4 py-8 text-center text-gray-400">Belum ada data.</td></tr>
                 @endforelse
             </tbody>
             <tfoot class="bg-gray-100 font-semibold text-sm">

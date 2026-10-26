@@ -16,7 +16,21 @@ class DashboardController extends Controller {
         $kasHariIni = KasMasuk::whereDate('tanggal', today())->sum('jumlah');
 
         // Piutang = total transaksi yang belum lunas
-        $totalPiutang = BarangKeluar::where('status_pembayaran', 'belum_lunas')->sum('total_harga');
+        $allBarangMasuk = BarangMasuk::all();
+            $totalPiutang = $allBarangMasuk->where('status_pembayaran', 'belum_lunas')->sum(function ($row) {
+                return $row->jumlah * $row->harga_satuan;
+            });
+
+        // ===== UTANG: Barang Keluar yang Belum Lunas =====
+        $allBarangKeluar = BarangKeluar::all();
+        $totalUtang = $allBarangKeluar->where('status_pembayaran', 'belum_lunas')->sum('total_harga');
+
+        // ===== Total Keuntungan (Sama seperti di Buku Tagihan) =====
+        $totalKeuntungan = BarangKeluar::where('status_pembayaran', 'lunas')
+            ->get()
+            ->sum(function ($row) {
+                return $row->keuntungan * $row->jumlah;
+            });
 
         $stokMenipis = Barang::whereColumn('stok', '<=', 'stok_minimum')
                         ->where('stok', '>', 0)->count();
@@ -110,14 +124,23 @@ class DashboardController extends Controller {
             ->orderBy('stok')
             ->take(6)
             ->get();
+        // ===== Pengingat Jatuh Tempo =====
+        $reminders = BarangMasuk::with('barang')
+            ->where('status_pembayaran', 'belum_lunas')
+            ->whereNotNull('tanggal_jatuh_tempo')
+            ->orderBy('tanggal_jatuh_tempo', 'asc')
+            ->take(5)
+            ->get();
 
         return view('dashboard', compact(
-            'penjualanHariIni', 'kasHariIni', 'totalPiutang',
+            'penjualanHariIni', 'kasHariIni', 'totalPiutang','totalUtang',
             'stokMenipis', 'stokHabis',
             'chartLabels', 'chartPenjualan', 'totalMingguIni',
             'recentTransaksi', 'barangKritis',
             'totalModal', 'totalModalBulanIni', 'detailBarangMasuk',
-            'totalModalLunas', 'totalModalBelumLunas' 
+            'totalModalLunas', 'totalModalBelumLunas',
+            'reminders',
+            'totalKeuntungan'
         ));
     }
 }
