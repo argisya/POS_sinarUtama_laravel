@@ -55,7 +55,7 @@
                     <th class="px-4 py-3 text-left">Tanggal</th>
                     <th class="px-4 py-3 text-left">Pembeli</th>
                     <th class="px-4 py-3 text-left">Barang</th>
-                    <th class="px-4 py-3 text-right">Qty</th>
+                    <th class="px-4 py-3 text-center">Qty (Box)</th>
                     <th class="px-4 py-3 text-right">Total</th>
                     <th class="px-4 py-3 text-right">Keuntungan</th>
                     <th class="px-4 py-3 text-center">Status</th>
@@ -69,13 +69,30 @@
                         <td class="px-4 py-3">{{ $row->tanggal->format('d/m/Y') }}</td>
                         <td class="px-4 py-3 font-medium">{{ $row->pembeli ?? '-' }}</td>
                         <td class="px-4 py-3">{{ $row->barang->nama }}</td>
-                        <td class="px-4 py-3 text-right">{{ $row->jumlah }} pcs</td>
+                        
+                        
+                        <td class="px-4 py-3 text-center font-semibold text-gray-700">
+                            {{ $row->jumlah_box }} Box
+                        </td>
+                        
+                        {{-- Total --}}
                         <td class="px-4 py-3 text-right font-semibold">
-                            Rp {{ number_format($row->total_harga, 0, ',', '.') }}
+                            {{-- Total = Jumlah Box x Harga Jual per Box --}}
+                            Rp {{ number_format($row->jumlah_box * $row->harga_jual, 0, ',', '.') }}
                         </td>
+
+                        {{-- Keuntungan --}}
                         <td class="px-4 py-3 text-right text-emerald-700">
-                            Rp {{ number_format($row->keuntungan * $row->jumlah, 0, ',', '.') }}
+                            @php
+                                // Ambil modal per box langsung dari master barang
+                                $modalPerBox = $row->barang->harga ?? 0;
+                                
+                                // Keuntungan = (Harga Jual Box - Modal Box) x Jumlah Box
+                                $untung = ($row->harga_jual - $modalPerBox) * $row->jumlah_box;
+                            @endphp
+                            Rp {{ number_format($row->keuntungan, 0, ',', '.') }}
                         </td>
+
                         <td class="px-4 py-3 text-center">
                             @if ($row->status_pembayaran === 'lunas')
                                 <span class="px-2 py-1 text-xs rounded bg-emerald-100 text-emerald-700">Lunas</span>
@@ -83,7 +100,7 @@
                                 <span class="px-2 py-1 text-xs rounded bg-red-100 text-red-700">Belum Lunas</span>
                             @endif
                         </td>
-                        <td class="px-4 py-3 text-center whitespace-nowrap">
+                        <td class="px-4 py-3 text-center">
                             @if ($row->status_pembayaran === 'belum_lunas')
                                 <form method="POST" action="{{ route('buku-tagihan.lunasi', $row->id) }}"
                                     class="inline"
@@ -100,15 +117,9 @@
 
                             <form method="POST" action="{{ route('buku-tagihan.destroy', $row->id) }}"
                                 class="inline"
-                                onsubmit="return confirm(
-                                    'Hapus transaksi {{ $row->barang->kode_barang }}?\n\n' +
-                                    '• Stok {{ $row->barang->nama }} akan dikembalikan (+{{ $row->jumlah }} pcs)\n' +
-                                    '• Kas masuk terkait akan ikut terhapus\n' +
-                                    '{{ $row->status_pembayaran === 'lunas' ? '• Status lunas akan hilang\n' : '' }}' +
-                                    '\nLanjutkan?'
-                                )">
+                                onsubmit="return confirm('Hapus transaksi ini? Stok akan dikembalikan.')">
                                 @csrf @method('DELETE')
-                                <button class="text-red-600 hover:underline text-xs">Hapus</button>
+                                <button class="text-red-600 hover:underline text-xs ml-1">Hapus</button>
                             </form>
                         </td>
                     </tr>

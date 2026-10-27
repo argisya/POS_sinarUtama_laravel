@@ -161,8 +161,17 @@
                             </span>
                         </td>
                         <td class="px-4 py-3 text-gray-700">{{ $row->keterangan ?? '-' }}</td>
+                        {{-- Jumlah --}}
                         <td class="px-4 py-3 text-right font-semibold text-emerald-700">
-                            Rp {{ number_format($row->jumlah, 0, ',', '.') }}
+                            @php
+                                // Jika kas ini dari penjualan/pelunasan, hitung pakai Box
+                                if ($row->barangKeluar) {
+                                    $nominal = $row->barangKeluar->jumlah_box * $row->barangKeluar->harga_jual;
+                                } else {
+                                    $nominal = $row->jumlah;
+                                }
+                            @endphp
+                            Rp {{ number_format($nominal, 0, ',', '.') }}
                         </td>
                         <td class="px-4 py-3 text-center">
                             @if ($row->barang_keluar_id)

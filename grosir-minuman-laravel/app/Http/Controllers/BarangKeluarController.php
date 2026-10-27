@@ -14,17 +14,25 @@ class BarangKeluarController extends Controller {
             ->latest('tanggal')->latest('id')
             ->paginate(10);
 
-        $barang = Barang::orderBy('nama')->get();
+        $barang = Barang::withSum('barangMasuk as total_box_masuk', 'jumlah_box')
+            ->withSum('barangKeluar as total_box_keluar', 'jumlah_box')
+            ->orderBy('nama')
+            ->get();
 
-        return view('barang-keluar.index', compact('barangKeluar', 'barang'));
+
+        // Hitung Grand Total (Harga Jual x Jumlah Box)
+         $allBarangKeluar = BarangKeluar::all();
+        $grandTotal = $allBarangKeluar->sum(function ($row) {
+            return $row->harga_jual * $row->jumlah_box;
+        });
+        return view('barang-keluar.index', compact('barangKeluar', 'barang', 'grandTotal'));
     }
 
-    public function store(Request $request) {
+        public function store(Request $request) {
         $validated = $request->validate([
             'barang_id'         => 'required|exists:barang,id',
             'jumlah_box'        => 'required|integer|min:1',
-            'jumlah'            => 'required|integer|min:1',
-            'harga_jual'        => 'required|integer|min:1', // ⬅️ Ubah dari keuntungan
+            'harga_jual'        => 'required|integer|min:1', // Ini Harga Jual per BOX
             'tanggal'           => 'required|date',
             'pembeli'           => 'nullable|string|max:100',
             'status_pembayaran' => 'required|in:lunas,belum_lunas',
@@ -32,14 +40,6 @@ class BarangKeluarController extends Controller {
         ]);
 
         $barang = Barang::findOrFail($validated['barang_id']);
-        $validated['jumlah'] = $validated['jumlah_box'] * $barang->pcs_per_box;
-
-        // Validasi stok menggunakan $validated['jumlah']
-        if ($barang->stok < $validated['jumlah']) {
-            throw ValidationException::withMessages([
-                'jumlah_box' => "Stok tidak cukup. Stok saat ini: {$barang->stok} pcs.",
-            ]);
-        }
 
         if ($barang->harga <= 0) {
             throw ValidationException::withMessages([
@@ -47,23 +47,27 @@ class BarangKeluarController extends Controller {
             ]);
         }
 
+        // Hitung total pcs secara otomatis
+        $validated['jumlah'] = $validated['jumlah_box'] * $barang->pcs_per_box;
+
         if ($barang->stok < $validated['jumlah']) {
             throw ValidationException::withMessages([
-                'jumlah' => "Stok tidak cukup. Stok saat ini: {$barang->stok} pcs.",
+                'jumlah_box' => "Stok tidak cukup. Stok saat ini: {$barang->stok} pcs.",
             ]);
         }
 
-        // Perhitungan
-        $totalHarga = $validated['harga_jual'] * $validated['jumlah'];
+        // Perhitungan Finansial
+        $totalHarga = $validated['harga_jual'] * $validated['jumlah_box'];
         
-        // Tetap simpan keuntungan di DB agar Dashboard tetap jalan
-        $keuntunganPerPcs = $validated['harga_jual'] - $barang->harga;
-        $totalKeuntungan = $keuntunganPerPcs * $validated['jumlah'];
+        // Hitung Keuntungan (Harga Jual Box - Modal Box)
+        $modalPerBox = $barang->harga;
+        $keuntunganPerBox = $validated['harga_jual'] - $modalPerBox;
+        $totalKeuntungan = $keuntunganPerBox * $validated['jumlah_box'];
 
         DB::transaction(function () use ($validated, $barang, $totalHarga, $totalKeuntungan) {
             $bk = BarangKeluar::create(array_merge($validated, [
                 'total_harga' => $totalHarga,
-                'keuntungan'  => $totalKeuntungan, // Simpan profit otomatis
+                'keuntungan'  => $totalKeuntungan,
             ]));
 
             Barang::where('id', $barang->id)->decrement('stok', $validated['jumlah']);

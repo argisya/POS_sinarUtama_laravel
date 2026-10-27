@@ -16,8 +16,11 @@
                 class="w-full border rounded px-3 py-2 text-sm @error('barang_id') border-red-500 @enderror">
                 <option value="">-- Pilih Barang --</option>
                 @foreach ($barang as $b)
+                    @php
+                        $stokBox = ($b->total_box_masuk ?? 0) - ($b->total_box_keluar ?? 0);
+                    @endphp
                     <option value="{{ $b->id }}" @selected(old('barang_id') == $b->id)>
-                        {{ $b->kode_barang }} — {{ $b->nama }} (stok: {{ $b->stok }} pcs)
+                        {{ $b->kode_barang }} — {{ $b->nama }} (Stok: {{ $stokBox }} Box)
                     </option>
                 @endforeach
             </select>
@@ -38,11 +41,19 @@
         </div>
 
         <div>
-            <label class="block text-sm mb-1">Harga Jual / pcs (Rp) <span class="text-red-500">*</span></label>
-            <input type="number" name="harga_jual" min="1" value="{{ old('harga_jual') }}" required
-                placeholder="Harga jual per pcs"
+            <label class="block text-sm mb-1">Harga Jual / Box (Rp) <span class="text-red-500">*</span></label>
+            <input type="number" name="harga_jual" id="inputHargaJual" min="1" value="{{ old('harga_jual') }}" required
+                placeholder="Harga jual per box"
                 class="w-full border rounded px-3 py-2 text-sm @error('harga_jual') border-red-500 @enderror">
             @error('harga_jual') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+        </div>
+
+        {{-- Tambahan Input Total Otomatis --}}
+        <div>
+            <label class="block text-sm mb-1">Total (Otomatis)</label>
+            <input type="text" id="inputTotalHarga" readonly
+                class="w-full border rounded px-3 py-2 text-sm bg-gray-100 cursor-not-allowed font-bold text-emerald-700"
+                value="Rp 0">
         </div>
 
         <div>
@@ -97,8 +108,9 @@
                     <th class="px-4 py-3 text-left">Kode</th>
                     <th class="px-4 py-3 text-left">Tanggal</th>
                     <th class="px-4 py-3 text-left">Barang</th>
-                    <th class="px-4 py-3 text-right">Jumlah</th>
-                    <th class="px-4 py-3 text-right">Harga Jual</th>
+                    <th class="px-4 py-3 text-right">Jumlah</th> {{-- Gabungan Box & Pcs --}}
+                    <th class="px-4 py-3 text-right">Harga Jual / Box</th>
+                    <th class="px-4 py-3 text-right">Total</th>
                     <th class="px-4 py-3 text-left">Pembeli</th>
                     <th class="px-4 py-3 text-center">Status</th>
                     <th class="px-4 py-3 text-center">Aksi</th>
@@ -110,10 +122,23 @@
                         <td class="px-4 py-3 font-mono text-xs">{{ $row->barang->kode_barang }}</td>
                         <td class="px-4 py-3">{{ $row->tanggal->format('d/m/Y') }}</td>
                         <td class="px-4 py-3 font-medium">{{ $row->barang->nama }}</td>
-                        <td class="px-4 py-3 text-right">{{ number_format($row->jumlah) }} pcs</td>
-                        <td class="px-4 py-3 text-right font-semibold">
-                            Rp {{ number_format($row->total_harga, 0, ',', '.') }}
+                        
+                        {{-- Tampilan Jumlah (Box & Pcs) --}}
+                        <td class="px-4 py-3 text-right">
+                            <span class="font-semibold">{{ number_format($row->jumlah_box) }} Box</span>
+                            <span class="block text-[10px] text-gray-500">({{ number_format($row->jumlah) }} Pcs)</span>
                         </td>
+
+                        {{-- Harga Jual per Box --}}
+                        <td class="px-4 py-3 text-right">
+                            Rp {{ number_format($row->harga_jual, 0, ',', '.') }}
+                        </td>
+
+                        {{-- Total --}}
+                        <td class="px-4 py-3 text-right font-semibold text-emerald-700">
+                            Rp {{ number_format($row->jumlah_box * $row->harga_jual, 0, ',', '.') }}
+                        </td>
+                        
                         <td class="px-4 py-3">{{ $row->pembeli ?? '-' }}</td>
                         <td class="px-4 py-3 text-center">
                             @if ($row->status_pembayaran === 'lunas')
@@ -124,16 +149,25 @@
                         </td>
                         <td class="px-4 py-3 text-center">
                             <form method="POST" action="{{ route('barang-keluar.destroy', $row->id) }}"
-                                  onsubmit="return confirm('Yakin hapus? Stok akan dikembalikan.')">
+                                onsubmit="return confirm('Yakin hapus? Stok akan dikembalikan.')">
                                 @csrf @method('DELETE')
                                 <button class="text-red-600 hover:underline text-xs">Hapus</button>
                             </form>
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="8" class="px-4 py-8 text-center text-gray-400">Belum ada data.</td></tr>
+                    <tr><td colspan="9" class="px-4 py-8 text-center text-gray-400">Belum ada data.</td></tr>
                 @endforelse
             </tbody>
+            <tfoot class="bg-gray-100 font-semibold text-sm">
+                <tr>
+                    <td colspan="5" class="px-4 py-3 text-right text-gray-700">Grand Total Pendapatan:</td>
+                    <td class="px-4 py-3 text-right text-emerald-700">
+                        Rp {{ number_format($grandTotal ?? 0, 0, ',', '.') }}
+                    </td>
+                    <td colspan="3" class="px-4 py-3"></td>
+                </tr>
+            </tfoot>
         </table>
     </div>
 
@@ -173,6 +207,23 @@
 
     selectBarang.addEventListener('change', hitungPcs);
     inputBox.addEventListener('input', hitungPcs);
+
+</script>
+<script>
+    const inputJumlahBox = document.querySelector('input[name="jumlah_box"]');
+    const inputHargaJual = document.getElementById('inputHargaJual');
+    const inputTotalHarga = document.getElementById('inputTotalHarga');
+
+    function hitungTotal() {
+        const box = parseInt(inputJumlahBox.value) || 0;
+        const harga = parseInt(inputHargaJual.value) || 0;
+        const total = box * harga;
+        
+        inputTotalHarga.value = 'Rp ' + total.toLocaleString('id-ID');
+    }
+
+    inputJumlahBox.addEventListener('input', hitungTotal);
+    inputHargaJual.addEventListener('input', hitungTotal);
 </script>
 @endpush
 @endsection

@@ -57,10 +57,8 @@ class BarangMasukController extends Controller {
                 ->increment('stok', $validated['jumlah']);
 
             if ($validated['harga_satuan'] > 0) {
-                // Bagi harga box ke harga pcs untuk update modal di Master Barang
-                $hargaPerPcs = $validated['harga_satuan'] / $barang->pcs_per_box;
-                Barang::where('id', $validated['barang_id'])
-                    ->update(['harga' => (int) ceil($hargaPerPcs)]);
+                // SIMPAN HARGA BOX LANGSUNG
+                Barang::where('id', $validated['barang_id'])->update(['harga' => $validated['harga_satuan']]);
             }
         });
 

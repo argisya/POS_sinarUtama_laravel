@@ -4,20 +4,11 @@
 @section('content')
 
 {{-- Ringkasan --}}
-<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-    <div class="bg-white rounded-lg shadow p-4 border-l-4 border-blue-500">
-        <p class="text-xs text-gray-500 uppercase">Total Barang</p>
-        <p class="text-2xl font-bold text-gray-800">{{ number_format($totalBarang) }}</p>
-    </div>
-    <div class="bg-white rounded-lg shadow p-4 border-l-4 border-emerald-500">
-        <p class="text-xs text-gray-500 uppercase">Total Stok Tersedia</p>
-        <p class="text-2xl font-bold text-gray-800">
-            {{ number_format($totalStokBox ?? 0) }} <span class="text-sm font-normal">Box</span>
-        </p>
-    </div>
-    <div class="bg-white rounded-lg shadow p-4 border-l-4 border-amber-500">
-        <p class="text-xs text-gray-500 uppercase">Perlu Perhatian</p>
-        <p class="text-2xl font-bold text-amber-600">{{ number_format($jumlahKritis) }} barang</p>
+{{-- Ringkasan (Sederhana) --}}
+<div class="mb-4">
+    <div class="bg-white rounded-lg shadow p-4 border-l-4 border-blue-500 inline-block w-full md:w-1/3">
+        <p class="text-xs text-gray-500 uppercase">Total Katalog Barang</p>
+        <p class="text-2xl font-bold text-gray-800">{{ number_format($totalBarang) }} <span class="text-sm font-normal">Produk</span></p>
     </div>
 </div>
 
@@ -37,10 +28,9 @@
         </div>
 
         <div>
-            <label class="block text-sm mb-1">Total Box <span class="text-red-500">*</span></label>
-            <input type="number" name="qty_box" id="inputQtyBox" value="{{ old('qty_box', 1) }}" min="0" required
-                class="w-full border rounded px-3 py-2 text-sm @error('qty_box') border-red-500 @enderror">
-            @error('qty_box') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+            <label class="block text-sm mb-1">Box</label>
+            <input type="number" name="qty_box" id="inputQtyBox" value="1" readonly
+                class="w-full border rounded px-3 py-2 text-sm bg-gray-100 cursor-not-allowed text-center font-bold text-gray-600">
         </div>
 
         <div>
@@ -113,54 +103,22 @@
                 <tr>
                     <th class="px-4 py-3 text-left">Kode</th>
                     <th class="px-4 py-3 text-left">Nama Barang</th>
-                    <th class="px-4 py-3 text-center">Isi per Box</th>
-                    <th class="px-4 py-3 text-center">Total Box</th>
-                    <th class="px-4 py-3 text-center">Total Pcs</th>
-                    <th class="px-4 py-3 text-center">Status</th>
+                    <th class="px-4 py-3 text-center">Kemasan</th>
                     <th class="px-4 py-3 text-center">Aksi</th>
                 </tr>
             </thead>
             <tbody class="divide-y">
                 @forelse ($barang as $row)
-                    @php
-                        $status = $row->status_stok;
-                        $badge = match($status) {
-                            'aman'       => 'bg-emerald-100 text-emerald-700',
-                            'tidak_aman' => 'bg-amber-100 text-amber-700',
-                            'habis'      => 'bg-red-100 text-red-700',
-                        };
-                        $label = match($status) {
-                            'aman'       => 'Aman',
-                            'tidak_aman' => 'Tidak Aman',
-                            'habis'      => 'Habis',
-                        };
-
-                        // Hitung Total Box dan Sisa Pcs (jika ada)
-                        $totalBox = floor($row->stok / $row->pcs_per_box);
-                        $sisaPcs = $row->stok % $row->pcs_per_box;
-                    @endphp
                     <tr class="hover:bg-gray-50">
                         <td class="px-4 py-3 font-mono text-xs">{{ $row->kode_barang }}</td>
                         <td class="px-4 py-3 font-medium">{{ $row->nama }}</td>
                         
                         <td class="px-4 py-3 text-center text-gray-600 text-xs">
-                            {{ $row->pcs_per_box }} Pcs
+                            1 Box = {{ $row->pcs_per_box }} Pcs
                         </td>
-                        <td class="px-4 py-3 text-center font-bold text-gray-800">
-                            {{ $totalBox }} Box
-                        </td>
-                        <td class="px-4 py-3 text-center font-bold text-indigo-600">
-                            {{ number_format($row->stok) }} Pcs
-                            @if($sisaPcs > 0)
-                                <span class="block text-[10px] text-gray-500 font-normal">({{ $totalBox }} Box + {{ $sisaPcs }} Pcs)</span>
-                            @endif
-                        </td>
-                        
-                        <td class="px-4 py-3 text-center">
-                            <span class="px-2 py-1 text-xs rounded {{ $badge }}">{{ $label }}</span>
-                        </td>
+
                         <td class="px-4 py-3 text-center whitespace-nowrap">
-                            <button type="button" onclick="bukaEdit({{ $row->id }}, @js($row->nama), {{ $row->pcs_per_box }}, {{ $totalBox }})"
+                            <button type="button" onclick="bukaEdit({{ $row->id }}, @js($row->nama), {{ $row->pcs_per_box }})"
                                 class="text-blue-600 hover:underline text-xs mr-2">
                                 Edit
                             </button>
@@ -172,7 +130,7 @@
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="7" class="px-4 py-8 text-center text-gray-400">Belum ada barang.</td></tr>
+                    <tr><td colspan="4" class="px-4 py-8 text-center text-gray-400">Belum ada barang.</td></tr>
                 @endforelse
             </tbody>
         </table>
@@ -183,7 +141,6 @@
     @endif
 </div>
 
-{{-- Modal Edit Nama --}}
 <dialog id="modalEdit" class="rounded-lg shadow-2xl backdrop:bg-black/50 p-0 w-full max-w-md">
     <form method="POST" id="formEdit" class="p-6">
         @csrf @method('PUT')
@@ -197,8 +154,8 @@
             
             <div class="grid grid-cols-2 gap-3">
                 <div>
-                    <label class="block text-sm mb-1">Total Box</label>
-                    <input type="number" name="qty_box" id="editQtyBox" min="0" required class="w-full border rounded px-3 py-2 text-sm">
+                    <label class="block text-sm mb-1">Box</label>
+                    <input type="number" value="1" readonly class="w-full border rounded px-3 py-2 text-sm bg-gray-100 text-center">
                 </div>
                 <div>
                     <label class="block text-sm mb-1">Isi per Box (Pcs)</label>
@@ -216,11 +173,10 @@
 
 @push('scripts')
 <script>
-    function bukaEdit(id, nama, pcsPerBox, qtyBox) {
+    function bukaEdit(id, nama, pcsPerBox) {
         document.getElementById('formEdit').action = `/master-barang/${id}`;
         document.getElementById('editNama').value = nama;
         document.getElementById('editPcsPerBox').value = pcsPerBox;
-        document.getElementById('editQtyBox').value = qtyBox;
         document.getElementById('modalEdit').showModal();
     }
 </script>

@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
 class MasterBarangController extends Controller {
-        public function index(Request $request) {
+    public function index(Request $request) {
         $search = $request->input('q');
 
         $barang = Barang::query()
@@ -19,42 +19,21 @@ class MasterBarangController extends Controller {
             ->withQueryString();
 
         $totalBarang = Barang::count();
-        
-        // Hitung total stok keseluruhan dalam bentuk Pcs
-        $totalStok = Barang::sum('stok'); 
 
-        // Hitung total stok keseluruhan dalam bentuk Box
-        $totalStokBox = Barang::all()->sum(function ($row) {
-            return floor($row->stok / ($row->pcs_per_box ?: 1));
-        });
-
-        $jumlahKritis = Barang::where(function ($q) {
-            $q->where('stok', '<=', 0)
-              ->orWhere(function ($w) {
-                  $w->where('stok', '>', 0)
-                    ->whereColumn('stok', '<=', 'stok_minimum');
-              });
-        })->count();
-
-        return view('master-barang.index', compact(
-            'barang', 'search', 'totalBarang', 'totalStok', 'totalStokBox', 'jumlahKritis' // ⬅️ Tambahkan $totalStokBox
-        ));
+        return view('master-barang.index', compact('barang', 'search', 'totalBarang'));
     }
 
     public function store(Request $request) {
         $validated = $request->validate([
             'nama'        => 'required|string|max:100|unique:barang,nama',
-            'qty_box'     => 'required|integer|min:0',
             'pcs_per_box' => 'required|integer|min:1', 
         ]);
-
-        // Kalkulasi Total Pcs
-        $totalStok = $validated['qty_box'] * $validated['pcs_per_box'];
 
         Barang::create([
             'nama'        => $validated['nama'],
             'pcs_per_box' => $validated['pcs_per_box'],
-            'stok'        => $totalStok,
+            'stok'        => 0, // Stok awal 0
+            'harga'       => 0, // Harga modal awal 0 (akan diisi saat Barang Masuk)
         ]);
 
         return redirect()->route('master-barang.index')
@@ -64,16 +43,12 @@ class MasterBarangController extends Controller {
     public function update(Request $request, Barang $masterBarang) {
         $validated = $request->validate([
             'nama'        => ['required', 'string', 'max:100', Rule::unique('barang', 'nama')->ignore($masterBarang->id)],
-            'qty_box'     => 'required|integer|min:0',
             'pcs_per_box' => 'required|integer|min:1',
         ]);
-
-        $totalStok = $validated['qty_box'] * $validated['pcs_per_box'];
 
         $masterBarang->update([
             'nama'        => $validated['nama'],
             'pcs_per_box' => $validated['pcs_per_box'],
-            'stok'        => $totalStok,
         ]);
 
         return redirect()->route('master-barang.index')

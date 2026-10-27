@@ -10,10 +10,27 @@ use Illuminate\Support\Facades\DB;
 class DashboardController extends Controller {
     public function index() {
         // ===== 4 Kartu Metrik =====
-        $penjualanHariIni = BarangKeluar::whereDate('tanggal', today())
-                            ->sum('total_harga');
+                // ===== 1. Penjualan Hari Ini (Berdasarkan Box) =====
+        $penjualanHariIni = BarangKeluar::with('barang')
+            ->whereDate('tanggal', today())
+            ->get()
+            ->sum(function ($row) {
+                return $row->jumlah_box * $row->harga_jual;
+            });
 
-        $kasHariIni = KasMasuk::whereDate('tanggal', today())->sum('jumlah');
+        // ===== 2. Kas Masuk Hari Ini (Berdasarkan Box) =====
+        // Kita hitung ulang kas masuk yang berasal dari penjualan tunai
+        $kasHariIni = KasMasuk::with('barangKeluar')
+            ->whereDate('tanggal', today())
+            ->get()
+            ->sum(function ($row) {
+                // Jika kas masuk ini otomatis dari penjualan, hitung ulang pakai rumus Box
+                if ($row->sumber === 'penjualan_tunai' && $row->barangKeluar) {
+                    return $row->barangKeluar->jumlah_box * $row->barangKeluar->harga_jual;
+                }
+                // Jika manual (modal/lain-lain), pakai nominal aslinya
+                return $row->jumlah;
+            });
 
         // Piutang = total transaksi yang belum lunas
         $allBarangMasuk = BarangMasuk::all();
@@ -25,12 +42,8 @@ class DashboardController extends Controller {
         $allBarangKeluar = BarangKeluar::all();
         $totalUtang = $allBarangKeluar->where('status_pembayaran', 'belum_lunas')->sum('total_harga');
 
-        // ===== Total Keuntungan (Sama seperti di Buku Tagihan) =====
-        $totalKeuntungan = BarangKeluar::where('status_pembayaran', 'lunas')
-            ->get()
-            ->sum(function ($row) {
-                return $row->keuntungan * $row->jumlah;
-            });
+        // ===== 3. Total Keuntungan (Berdasarkan Box) =====
+        $totalKeuntungan = BarangKeluar::where('status_pembayaran', 'lunas')->sum('keuntungan');
 
         $stokMenipis = Barang::whereColumn('stok', '<=', 'stok_minimum')
                         ->where('stok', '>', 0)->count();

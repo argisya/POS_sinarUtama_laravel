@@ -30,10 +30,17 @@ class Barang extends Model {
         return $this->hasMany(BarangKeluar::class);
     }
 
-    // Helper status: aman / tidak_aman / habis
+    // Helper status: aman / tidak_aman / habis (Berdasarkan Box)
     public function getStatusStokAttribute(): string {
-        if ($this->stok <= 0)                       return 'habis';
-        if ($this->stok <= $this->stok_minimum)     return 'tidak_aman';
+        // Konversi total pcs di database menjadi box
+        $totalBox = floor($this->stok / ($this->pcs_per_box ?: 1));
+
+        if ($totalBox <= 0) {
+            return 'habis';
+        }
+        if ($totalBox <= 10) {
+            return 'tidak_aman';
+        }
         return 'aman';
     }
 }

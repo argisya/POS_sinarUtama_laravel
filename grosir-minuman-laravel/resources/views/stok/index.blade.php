@@ -10,13 +10,13 @@
     </div>
     <div class="bg-white rounded-lg shadow p-4 border-l-4 border-emerald-500">
         <p class="text-xs text-gray-500 uppercase">Total Stok</p>
-        <p class="text-2xl font-bold text-gray-800">{{ number_format($totalStok) }} <span class="text-sm font-normal">pcs</span></p>
-    </div>
-    <div class="bg-white rounded-lg shadow p-4 border-l-4 border-indigo-500">
-        <p class="text-xs text-gray-500 uppercase">Total Stok Box</p>
-        <p class="text-2xl font-bold text-indigo-600">
-            {{ number_format($totalStokBox) }} <span class="text-sm font-normal text-gray-500">Box</span>
+        <p class="text-2xl font-bold text-gray-800">
+            {{ number_format($totalStokBox) }} <span class="text-sm font-normal">Box</span>
         </p>
+    </div>
+    <div class="bg-white rounded-lg shadow p-4 border-l-4 border-amber-500">
+        <p class="text-xs text-gray-500 uppercase">Tidak Aman</p>
+        <p class="text-2xl font-bold text-amber-600">{{ number_format($jumlahTidakAman) }}</p>
     </div>
     <div class="bg-white rounded-lg shadow p-4 border-l-4 border-red-500">
         <p class="text-xs text-gray-500 uppercase">Habis</p>
@@ -56,39 +56,60 @@
                 <tr>
                     <th class="px-4 py-3 text-left">Kode</th>
                     <th class="px-4 py-3 text-left">Nama Barang</th>
-                    <th class="px-4 py-3 text-right">Modal Terakhir</th>
-                    <th class="px-4 py-3 text-right">Qty</th>
+                    <th class="px-4 py-3 text-center">Isi / Box</th>
+                    <th class="px-4 py-3 text-right">Modal / Box</th>
+                    <th class="px-4 py-3 text-center">Stok Tersedia</th>
                     <th class="px-4 py-3 text-center">Status</th>
                 </tr>
             </thead>
             <tbody class="divide-y">
                 @forelse ($barang as $row)
                     @php
-                        $status = $row->status_stok; // aman | tidak_aman | habis
-                        $badge = match($status) {
-                            'aman'       => 'bg-emerald-100 text-emerald-700',
-                            'tidak_aman' => 'bg-amber-100 text-amber-700',
-                            'habis'      => 'bg-red-100 text-red-700',
-                        };
-                        $label = match($status) {
-                            'aman'       => 'Aman',
-                            'tidak_aman' => 'Tidak Aman',
-                            'habis'      => 'Habis',
-                        };
-                        $rowBg = $status === 'habis' ? 'bg-red-50' : ($status === 'tidak_aman' ? 'bg-amber-50' : '');
+                        // Hitung Stok Tersedia
+                        $stokBox = ($row->total_box_masuk ?? 0) - ($row->total_box_keluar ?? 0);
+                        $stokPcs = $row->stok % ($row->pcs_per_box ?: 1);
+
+                        // Aturan Status Baru berdasarkan Stok Tersedia (Box)
+                        if ($stokBox <= 0) {
+                            $status = 'habis';
+                            $badge = 'bg-red-100 text-red-700';
+                            $label = 'Habis';
+                            $rowBg = 'bg-red-50';
+                        } elseif ($stokBox <= 10) {
+                            $status = 'tidak_aman';
+                            $badge = 'bg-amber-100 text-amber-700';
+                            $label = 'Tidak Aman';
+                            $rowBg = 'bg-amber-50';
+                        } else {
+                            $status = 'aman';
+                            $badge = 'bg-emerald-100 text-emerald-700';
+                            $label = 'Aman';
+                            $rowBg = '';
+                        }
+                        
+                        $modalPerBox = $row->harga;
                     @endphp
                     <tr class="hover:bg-gray-50 {{ $rowBg }}">
                         <td class="px-4 py-3 font-mono text-xs">{{ $row->kode_barang }}</td>
                         <td class="px-4 py-3 font-medium">{{ $row->nama }}</td>
+                        
+                        <td class="px-4 py-3 text-center text-xs text-gray-600">
+                            {{ $row->pcs_per_box }} Pcs
+                        </td>
+                        
                         <td class="px-4 py-3 text-right">
-                            @if ($row->harga > 0)
-                                Rp {{ number_format($row->harga, 0, ',', '.') }}
+                            @if ($modalPerBox > 0)
+                                Rp {{ number_format($modalPerBox, 0, ',', '.') }}
                             @else
                                 <span class="text-xs text-gray-400">belum ada</span>
                             @endif
                         </td>
-                        <td class="px-4 py-3 text-right font-semibold">{{ number_format($row->stok) }}</td>
-                        <td class="px-4 py-3 text-center text-gray-600">{{ $row->satuan }}</td>
+
+                        {{-- Stok Tersedia (Box & Pcs) --}}
+                        <td class="px-4 py-3 text-center">
+                            <span class="font-bold text-gray-800">{{ $stokBox }}</span> Box, 
+                        </td>
+                        
                         <td class="px-4 py-3 text-center">
                             <span class="px-2 py-1 text-xs rounded {{ $badge }}">{{ $label }}</span>
                         </td>
@@ -106,7 +127,7 @@
 </div>
 
 <div class="mt-4 text-xs text-gray-500">
-    ℹ️ Status: <b>Aman</b> jika stok > 5, <b>Tidak Aman</b> jika 1–5, <b>Habis</b> jika 0.
+    ℹ️ Status dihitung dari Stok Tersedia: <b>Aman</b> jika > 10 Box, <b>Tidak Aman</b> jika 1–10 Box, <b>Habis</b> jika 0 Box.
 </div>
 
 @endsection
