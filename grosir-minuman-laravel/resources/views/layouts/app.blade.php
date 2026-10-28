@@ -25,6 +25,7 @@
                     ['label' => 'Barang Keluar', 'route' => route('barang-keluar.index'), 'active' => request()->routeIs('barang-keluar.*')],
                     ['label' => 'Stok Barang',   'route' => route('stok.index'),          'active' => request()->routeIs('stok.*')],
                     ['label' => 'Kas Masuk',     'route' => route('kas-masuk.index'),     'active' => request()->routeIs('kas-masuk.*')],
+                    ['label' => 'Kas Keluar',    'route' => route('kas-keluar.index'),    'active' => request()->routeIs('kas-keluar.*')],
                     ['label' => 'Buku Tagihan',  'route' => route('buku-tagihan.index'),  'active' => request()->routeIs('buku-tagihan.*')],
                 ];
             @endphp

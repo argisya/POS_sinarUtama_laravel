@@ -43,7 +43,13 @@ class DashboardController extends Controller {
         $totalUtang = $allBarangKeluar->where('status_pembayaran', 'belum_lunas')->sum('total_harga');
 
         // ===== 3. Total Keuntungan (Berdasarkan Box) =====
-        $totalKeuntungan = BarangKeluar::where('status_pembayaran', 'lunas')->sum('keuntungan');
+                // ===== Keuntungan =====
+        // Keuntungan Kotor (Lunas)
+        $totalKeuntunganKotor = BarangKeluar::where('status_pembayaran', 'lunas')->sum('keuntungan');
+        // Pengeluaran
+        $totalPengeluaran = \App\Models\KasKeluar::sum('jumlah');
+        // Sisa Saldo (Bisa minus jika pengeluaran lebih besar)
+        $totalKeuntungan = $totalKeuntunganKotor - $totalPengeluaran;  
 
         $stokMenipis = Barang::whereColumn('stok', '<=', 'stok_minimum')
                         ->where('stok', '>', 0)->count();

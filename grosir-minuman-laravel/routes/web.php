@@ -7,6 +7,7 @@ use App\Http\Controllers\KasMasukController;
 use App\Http\Controllers\BukuTagihanController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\MasterBarangController;
+use App\Http\Controllers\KasKeluarController;
 
 // ===== Dashboard =====
 Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
@@ -30,8 +31,11 @@ Route::post('/buku-tagihan/{barangKeluar}/lunasi', [BukuTagihanController::class
     ->name('buku-tagihan.lunasi');
 Route::delete('/buku-tagihan/{barangKeluar}', [BukuTagihanController::class, 'destroy'])
     ->name('buku-tagihan.destroy');
-
 // Master Barang Routes
 Route::resource('master-barang', MasterBarangController::class)
     ->except(['create', 'show', 'edit'])
     ->parameters(['master-barang' => 'masterBarang']);
+// kas keluar
+Route::get('/kas-keluar', [KasKeluarController::class, 'index'])->name('kas-keluar.index');
+Route::post('/kas-keluar', [KasKeluarController::class, 'store'])->name('kas-keluar.store');
+Route::delete('/kas-keluar/{kasKeluar}', [KasKeluarController::class, 'destroy'])->name('kas-keluar.destroy');

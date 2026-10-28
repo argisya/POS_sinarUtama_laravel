@@ -12,7 +12,7 @@
 </div>
 
 {{-- ===== 4 Kartu Metrik Utama ===== --}}
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-6">
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-6">
     {{-- Penjualan Hari Ini --}}
     <div class="bg-white rounded-lg shadow p-5 border-l-4 border-emerald-500">
         <div class="flex items-center justify-between">
@@ -65,20 +65,42 @@
         </div>
     </div>
 
-    {{-- Total Keuntungan --}}
-    <div class="bg-white rounded-lg shadow p-5 border-l-4 border-emerald-500">
-        <div class="flex items-center justify-between">
-            <div>
-                <p class="text-xs text-gray-500 uppercase tracking-wide">Total Keuntungan</p>
-                <p class="text-xl font-bold text-emerald-600 mt-1">
-                    Rp {{ number_format($totalKeuntungan ?? 0, 0, ',', '.') }}
-                </p>
-                <p class="text-xs text-gray-400 mt-1">
-                    Dari transaksi lunas
-                </p>
+    {{-- Card Keuntungan (Lunas & Setelah Kas Keluar) --}}
+    <div class="bg-white rounded-lg shadow p-4 border-l-4 border-emerald-500 flex flex-col justify-between">
+        <div>
+            <p class="text-xs text-gray-500 uppercase tracking-wide font-bold mb-3">Keuntungan</p>
+            
+            <div class="space-y-1 text-xs">
+                {{-- Card Keuntungan --}}
+                <div class="bg-white rounded-lg shadow p-4 border-l-4 border-emerald-500 flex flex-col justify-between">
+                    <div>
+                        <!-- {{-- 1. Total Keuntungan (Lunas) - Sama dengan Buku Tagihan --}}
+                        <p class="text-xs text-gray-500 uppercase tracking-wide">Total Keuntungan (Lunas)</p>
+                        <p class="text-xl font-bold text-emerald-600 mt-1">
+                            Rp {{ number_format($totalKeuntunganKotor ?? 0, 0, ',', '.') }}
+                        </p> -->
+                        
+                        <!-- {{-- Garis Pembatas --}}
+                        <div class="border-t border-gray-200 my-3"></div> -->
+
+                        {{-- 2. Sisa Saldo Setelah Kas Keluar --}}
+                        <p class="text-xs text-gray-500 uppercase tracking-wide">Sisa Saldo (Setelah Kas Keluar)</p>
+                        <p class="text-xl font-bold mt-1 {{ ($totalKeuntungan ?? 0) < 0 ? 'text-red-600' : 'text-blue-600' }}">
+                            Rp {{ number_format($totalKeuntungan ?? 0, 0, ',', '.') }}
+                        </p>
+                    </div>
+
+                    {{-- 3. Info Total Modal --}}
+                    <div class="mt-3 pt-2 border-t border-gray-100">
+                        <p class="text-[10px] text-gray-400 text-center">
+                            Total Modal: Rp {{ number_format($totalModal ?? 0, 0, ',', '.') }}
+                        </p>
+                    </div>
+                </div>
             </div>
-            <div class="text-3xl">📈</div>
         </div>
+    </div>
+
     </div>
     {{-- Total Modal Pembelian (Barang Masuk) --}}
     <div class="bg-white rounded-lg shadow p-5 border-l-4 border-indigo-500 cursor-pointer hover:shadow-lg hover:-translate-y-0.5 transition-transform"
