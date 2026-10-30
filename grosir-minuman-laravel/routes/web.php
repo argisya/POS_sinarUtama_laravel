@@ -14,10 +14,12 @@ Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 // Barang Masuk Routes
 Route::get('/barang-masuk', [BarangMasukController::class, 'index'])->name('barang-masuk.index');
 Route::post('/barang-masuk', [BarangMasukController::class, 'store'])->name('barang-masuk.store');
+Route::put('/barang-masuk/{barangMasuk}', [BarangMasukController::class, 'update'])->name('barang-masuk.update');
 Route::delete('/barang-masuk/{barangMasuk}', [BarangMasukController::class, 'destroy'])->name('barang-masuk.destroy');
 // barang Keluar Routes
 Route::get('/barang-keluar', [BarangKeluarController::class, 'index'])->name('barang-keluar.index');
 Route::post('/barang-keluar', [BarangKeluarController::class, 'store'])->name('barang-keluar.store');
+Route::put('/barang-keluar/{barangKeluar}', [BarangKeluarController::class, 'update'])->name('barang-keluar.update');
 Route::delete('/barang-keluar/{barangKeluar}', [BarangKeluarController::class, 'destroy'])->name('barang-keluar.destroy');
 // Stok Routes
 Route::get('/stok', [StokController::class, 'index'])->name('stok.index');

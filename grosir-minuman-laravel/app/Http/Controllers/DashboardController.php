@@ -18,19 +18,28 @@ class DashboardController extends Controller {
                 return $row->jumlah_box * $row->harga_jual;
             });
 
-        // ===== 2. Kas Masuk Hari Ini (Berdasarkan Box) =====
-        // Kita hitung ulang kas masuk yang berasal dari penjualan tunai
-        $kasHariIni = KasMasuk::with('barangKeluar')
-            ->whereDate('tanggal', today())
+        // ===== 1. Kas Masuk Bulan Ini =====
+        $kasMasukBulanIni = KasMasuk::with('barangKeluar')
+            ->whereMonth('tanggal', now()->month)
+            ->whereYear('tanggal', now()->year)
             ->get()
             ->sum(function ($row) {
-                // Jika kas masuk ini otomatis dari penjualan, hitung ulang pakai rumus Box
                 if ($row->sumber === 'penjualan_tunai' && $row->barangKeluar) {
                     return $row->barangKeluar->jumlah_box * $row->barangKeluar->harga_jual;
                 }
-                // Jika manual (modal/lain-lain), pakai nominal aslinya
                 return $row->jumlah;
             });
+
+        // ===== 2. Total Keseluruhan Pengeluaran Kas Keluar =====
+        $totalKasKeluar = \App\Models\KasKeluar::sum('jumlah');
+
+        // ===== 3. Saldo Kas Bulan Ini (Kas Masuk - Total Kas Keluar) =====
+        $kasBulanIni = $kasMasukBulanIni - $totalKasKeluar;
+        // ===== Total Keseluruhan Pengeluaran Kas Keluar =====
+        $totalKasKeluar = \App\Models\KasKeluar::sum('jumlah');
+
+        // ===== Perhitungan Sesuai Spesifikasi: Kas Masuk Hari Ini - Total Kas Keluar =====
+        // $kasHariIni = $kasMasukHariIni - $totalKasKeluar;
 
         // Piutang = total transaksi yang belum lunas
         $allBarangMasuk = BarangMasuk::all();
@@ -152,7 +161,7 @@ class DashboardController extends Controller {
             ->get();
 
         return view('dashboard', compact(
-            'penjualanHariIni', 'kasHariIni', 'totalPiutang','totalUtang',
+            'penjualanHariIni', 'kasBulanIni', 'totalPiutang','totalUtang',
             'stokMenipis', 'stokHabis',
             'chartLabels', 'chartPenjualan', 'totalMingguIni',
             'recentTransaksi', 'barangKritis',

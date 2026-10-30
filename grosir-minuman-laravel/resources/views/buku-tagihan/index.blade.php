@@ -5,7 +5,7 @@
 
 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
     <div class="bg-white rounded-lg shadow p-4 border-l-4 border-red-500">
-        <p class="text-xs text-gray-500 uppercase">Total Piutang</p>
+        <p class="text-xs text-gray-500 uppercase">Total Utang</p>
         <p class="text-xl font-bold text-red-600">Rp {{ number_format($totalPiutang, 0, ',', '.') }}</p>
     </div>
     <div class="bg-white rounded-lg shadow p-4 border-l-4 border-blue-500">

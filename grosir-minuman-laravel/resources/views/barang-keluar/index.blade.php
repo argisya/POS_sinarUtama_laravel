@@ -147,9 +147,13 @@
                                 <span class="px-2 py-1 text-xs rounded bg-red-100 text-red-700">Belum Lunas</span>
                             @endif
                         </td>
-                        <td class="px-4 py-3 text-center">
-                            <form method="POST" action="{{ route('barang-keluar.destroy', $row->id) }}"
-                                onsubmit="return confirm('Yakin hapus? Stok akan dikembalikan.')">
+                        <td class="px-4 py-3 text-center whitespace-nowrap">
+                            <button type="button" 
+                                onclick="bukaEdit({{ $row->id }}, {{ $row->barang_id }}, {{ $row->jumlah_box }}, {{ $row->harga_jual }}, '{{ $row->tanggal->format('Y-m-d') }}', @js($row->pembeli), '{{ $row->status_pembayaran }}', @js($row->keterangan))"
+                                class="text-blue-600 hover:underline text-xs mr-2">
+                                Edit
+                            </button>
+                            <form method="POST" action="{{ route('barang-keluar.destroy', $row->id) }}" class="inline" onsubmit="return confirm('Yakin hapus? Stok akan dikembalikan.')">
                                 @csrf @method('DELETE')
                                 <button class="text-red-600 hover:underline text-xs">Hapus</button>
                             </form>
@@ -175,6 +179,56 @@
         <div class="px-6 py-4 border-t">{{ $barangKeluar->links() }}</div>
     @endif
 </div>
+
+<dialog id="modalEdit" class="rounded-lg shadow-2xl backdrop:bg-black/50 p-0 w-full max-w-2xl">
+    <form method="POST" id="formEdit" class="p-6">
+        @csrf @method('PUT')
+        <h3 class="text-lg font-semibold mb-4">Edit Barang Keluar</h3>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm mb-1">Barang</label>
+                <select name="barang_id" id="editBarangId" required class="w-full border rounded px-3 py-2 text-sm">
+                    @foreach ($barang as $b)
+                        <option value="{{ $b->id }}">{{ $b->kode_barang }} — {{ $b->nama }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm mb-1">Jumlah Box</label>
+                <input type="number" name="jumlah_box" id="editJumlahBox" min="1" required class="w-full border rounded px-3 py-2 text-sm">
+            </div>
+            <div>
+                <label class="block text-sm mb-1">Harga Jual / Box (Rp)</label>
+                <input type="number" name="harga_jual" id="editHarga" min="1" required class="w-full border rounded px-3 py-2 text-sm">
+            </div>
+            <div>
+                <label class="block text-sm mb-1">Tanggal</label>
+                <input type="date" name="tanggal" id="editTanggal" required class="w-full border rounded px-3 py-2 text-sm">
+            </div>
+            <div>
+                <label class="block text-sm mb-1">Pembeli</label>
+                <input type="text" name="pembeli" id="editPembeli" class="w-full border rounded px-3 py-2 text-sm">
+            </div>
+            <div>
+                <label class="block text-sm mb-1">Status</label>
+                <select name="status_pembayaran" id="editStatus" required class="w-full border rounded px-3 py-2 text-sm">
+                    <option value="lunas">Lunas</option>
+                    <option value="belum_lunas">Belum Lunas</option>
+                </select>
+            </div>
+            <div class="md:col-span-2">
+                <label class="block text-sm mb-1">Keterangan</label>
+                <input type="text" name="keterangan" id="editKeterangan" class="w-full border rounded px-3 py-2 text-sm">
+            </div>
+        </div>
+
+        <div class="flex gap-2 mt-6">
+            <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2 rounded text-sm font-medium">Simpan Perubahan</button>
+            <button type="button" onclick="document.getElementById('modalEdit').close()" class="bg-gray-200 hover:bg-gray-300 px-5 py-2 rounded text-sm">Batal</button>
+        </div>
+    </form>
+</dialog>
 
 @push('scripts')
 <script>
@@ -224,6 +278,19 @@
 
     inputJumlahBox.addEventListener('input', hitungTotal);
     inputHargaJual.addEventListener('input', hitungTotal);
+</script>
+<script>
+    function bukaEdit(id, barangId, box, harga, tgl, pembeli, status, keterangan) {
+        document.getElementById('formEdit').action = `/barang-keluar/${id}`;
+        document.getElementById('editBarangId').value = barangId;
+        document.getElementById('editJumlahBox').value = box;
+        document.getElementById('editHarga').value = harga;
+        document.getElementById('editTanggal').value = tgl;
+        document.getElementById('editPembeli').value = pembeli || '';
+        document.getElementById('editStatus').value = status;
+        document.getElementById('editKeterangan').value = keterangan || '';
+        document.getElementById('modalEdit').showModal();
+    }
 </script>
 @endpush
 @endsection

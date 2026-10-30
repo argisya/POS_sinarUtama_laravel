@@ -26,16 +26,17 @@
         </div>
     </div>
 
-    {{-- Kas Hari Ini --}}
+    {{-- Saldo Kas Bulan Ini --}}
     <div class="bg-white rounded-lg shadow p-5 border-l-4 border-blue-500">
         <div class="flex items-center justify-between">
             <div>
-                <p class="text-xs text-gray-500 uppercase tracking-wide">Kas Masuk Hari Ini</p>
-                <p class="text-2xl font-bold text-gray-800 mt-1">
-                    Rp {{ number_format($kasHariIni, 0, ',', '.') }}
+                <p class="text-xs text-gray-500 uppercase tracking-wide">Saldo Kas Bulan Ini</p>
+                <p class="text-2xl font-bold mt-1 {{ ($kasBulanIni ?? 0) < 0 ? 'text-red-600' : 'text-blue-600' }}">
+                    Rp {{ number_format($kasBulanIni ?? 0, 0, ',', '.') }}
                 </p>
+                <p class="text-[10px] text-gray-400 mt-1">(Kas Masuk - Total Pengeluaran)</p>
             </div>
-            <div class="text-3xl">🧾</div>
+            <div class="text-3xl">💵</div>
         </div>
     </div>
 
