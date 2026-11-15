@@ -63,33 +63,45 @@
                 </tr>
             </thead>
             <tbody class="divide-y">
+                @php 
+                    $prevDate = null; 
+                    $prevPembeli = null; 
+                @endphp
+
                 @forelse ($barangKeluar as $row)
+                    @php
+                        $currentDate = $row->tanggal->format('Y-m-d');
+                        $currentPembeli = $row->pembeli ?? '-';
+                        $showHeader = ($currentDate !== $prevDate || $currentPembeli !== $prevPembeli);
+                    @endphp
+
+                    {{-- Header Grup (Hanya muncul 1x per tanggal & pembeli) --}}
+                    @if($showHeader)
+                        <tr class="bg-gray-100 border-t-2 border-gray-200">
+                            <td colspan="9" class="px-4 py-2 text-sm font-bold text-gray-800">
+                                📅 {{ $row->tanggal->translatedFormat('d F Y') }} 
+                                <span class="mx-2 text-gray-400">|</span> 
+                                🛒 Pembeli: {{ $currentPembeli }}
+                            </td>
+                        </tr>
+                    @endif
+
+                    {{-- Baris Transaksi --}}
                     <tr class="hover:bg-gray-50 {{ $row->status_pembayaran === 'belum_lunas' ? 'bg-red-50' : '' }}">
                         <td class="px-4 py-3 font-mono text-xs">{{ $row->barang->kode_barang }}</td>
                         <td class="px-4 py-3">{{ $row->tanggal->format('d/m/Y') }}</td>
                         <td class="px-4 py-3 font-medium">{{ $row->pembeli ?? '-' }}</td>
                         <td class="px-4 py-3">{{ $row->barang->nama }}</td>
                         
-                        
                         <td class="px-4 py-3 text-center font-semibold text-gray-700">
                             {{ $row->jumlah_box }} Box
                         </td>
                         
-                        {{-- Total --}}
                         <td class="px-4 py-3 text-right font-semibold">
-                            {{-- Total = Jumlah Box x Harga Jual per Box --}}
                             Rp {{ number_format($row->jumlah_box * $row->harga_jual, 0, ',', '.') }}
                         </td>
-
-                        {{-- Keuntungan --}}
-                        <td class="px-4 py-3 text-right text-emerald-700">
-                            @php
-                                // Ambil modal per box langsung dari master barang
-                                $modalPerBox = $row->barang->harga ?? 0;
-                                
-                                // Keuntungan = (Harga Jual Box - Modal Box) x Jumlah Box
-                                $untung = ($row->harga_jual - $modalPerBox) * $row->jumlah_box;
-                            @endphp
+                        
+                        <td class="px-4 py-3 text-right {{ $row->keuntungan < 0 ? 'text-red-600' : 'text-emerald-700' }}">
                             Rp {{ number_format($row->keuntungan, 0, ',', '.') }}
                         </td>
 
@@ -100,29 +112,29 @@
                                 <span class="px-2 py-1 text-xs rounded bg-red-100 text-red-700">Belum Lunas</span>
                             @endif
                         </td>
+                        
                         <td class="px-4 py-3 text-center">
                             @if ($row->status_pembayaran === 'belum_lunas')
-                                <form method="POST" action="{{ route('buku-tagihan.lunasi', $row->id) }}"
-                                    class="inline"
-                                    onsubmit="return confirm('Tandai lunas & catat ke kas masuk?')">
+                                <form method="POST" action="{{ route('buku-tagihan.lunasi', $row->id) }}" class="inline" onsubmit="return confirm('Tandai lunas?')">
                                     @csrf
                                     <input type="hidden" name="tanggal" value="{{ date('Y-m-d') }}">
-                                    <button class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1 rounded text-xs">
-                                        Lunasi
-                                    </button>
+                                    <button class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1 rounded text-xs">Lunasi</button>
                                 </form>
                             @else
                                 <span class="text-xs text-emerald-600 font-medium mr-2">✓ Lunas</span>
                             @endif
-
-                            <form method="POST" action="{{ route('buku-tagihan.destroy', $row->id) }}"
-                                class="inline"
-                                onsubmit="return confirm('Hapus transaksi ini? Stok akan dikembalikan.')">
+                            <form method="POST" action="{{ route('buku-tagihan.destroy', $row->id) }}" class="inline" onsubmit="return confirm('Hapus transaksi ini? Stok akan dikembalikan.')">
                                 @csrf @method('DELETE')
                                 <button class="text-red-600 hover:underline text-xs ml-1">Hapus</button>
                             </form>
                         </td>
                     </tr>
+
+                    @php
+                        $prevDate = $currentDate;
+                        $prevPembeli = $currentPembeli;
+                    @endphp
+
                 @empty
                     <tr><td colspan="9" class="px-4 py-8 text-center text-gray-400">Belum ada transaksi.</td></tr>
                 @endforelse

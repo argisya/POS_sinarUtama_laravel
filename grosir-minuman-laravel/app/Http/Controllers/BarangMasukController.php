@@ -56,10 +56,9 @@ class BarangMasukController extends Controller {
             Barang::where('id', $validated['barang_id'])
                 ->increment('stok', $validated['jumlah']);
 
-            if ($validated['harga_satuan'] > 0) {
-                // SIMPAN HARGA BOX LANGSUNG
-                Barang::where('id', $validated['barang_id'])->update(['harga' => $validated['harga_satuan']]);
-            }
+            // if ($validated['harga_satuan'] > 0) {
+            //     Barang::where('id', $validated['barang_id'])->update(['harga' => $validated['harga_satuan']]);
+            // }
         });
 
         return redirect()->route('barang-masuk.index')
@@ -93,9 +92,9 @@ class BarangMasukController extends Controller {
             Barang::where('id', $newBarang->id)->increment('stok', $validated['jumlah']);
 
             // 5. Update modal di master barang jika harganya berubah
-            if ($validated['harga_satuan'] > 0) {
-                Barang::where('id', $newBarang->id)->update(['harga' => $validated['harga_satuan']]);
-            }
+            // if ($validated['harga_satuan'] > 0) {
+            //     Barang::where('id', $newBarang->id)->update(['harga' => $validated['harga_satuan']]);
+            // }
         });
 
         return redirect()->route('barang-masuk.index')->with('success', 'Transaksi berhasil diperbarui.');

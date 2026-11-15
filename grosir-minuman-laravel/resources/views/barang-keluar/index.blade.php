@@ -117,24 +117,47 @@
                 </tr>
             </thead>
             <tbody class="divide-y">
+                @php 
+                    $prevDate = null; 
+                    $prevPembeli = null; 
+                @endphp
+
                 @forelse ($barangKeluar as $row)
+                    @php
+                        // Format tanggal untuk dicek perubahannya
+                        $currentDate = $row->tanggal->format('Y-m-d');
+                        $currentPembeli = $row->pembeli ?? '-';
+                        
+                        // Cek apakah perlu menampilkan header grup baru
+                        $showHeader = ($currentDate !== $prevDate || $currentPembeli !== $prevPembeli);
+                    @endphp
+
+                    {{-- Header Grup --}}
+                    @if($showHeader)
+                        <tr class="bg-gray-100 border-t-2 border-gray-200">
+                            <td colspan="9" class="px-4 py-2 text-sm font-bold text-gray-800">
+                                📅 {{ $row->tanggal->translatedFormat('d F Y') }} 
+                                <span class="mx-2 text-gray-400">|</span> 
+                                🛒 Pembeli: {{ $currentPembeli }}
+                            </td>
+                        </tr>
+                    @endif
+
+                    {{-- Baris Data (Sesuaikan colspan tabel Anda) --}}
                     <tr class="hover:bg-gray-50">
                         <td class="px-4 py-3 font-mono text-xs">{{ $row->barang->kode_barang }}</td>
                         <td class="px-4 py-3">{{ $row->tanggal->format('d/m/Y') }}</td>
                         <td class="px-4 py-3 font-medium">{{ $row->barang->nama }}</td>
                         
-                        {{-- Tampilan Jumlah (Box & Pcs) --}}
                         <td class="px-4 py-3 text-right">
                             <span class="font-semibold">{{ number_format($row->jumlah_box) }} Box</span>
                             <span class="block text-[10px] text-gray-500">({{ number_format($row->jumlah) }} Pcs)</span>
                         </td>
 
-                        {{-- Harga Jual per Box --}}
                         <td class="px-4 py-3 text-right">
                             Rp {{ number_format($row->harga_jual, 0, ',', '.') }}
                         </td>
 
-                        {{-- Total --}}
                         <td class="px-4 py-3 text-right font-semibold text-emerald-700">
                             Rp {{ number_format($row->jumlah_box * $row->harga_jual, 0, ',', '.') }}
                         </td>
@@ -147,7 +170,7 @@
                                 <span class="px-2 py-1 text-xs rounded bg-red-100 text-red-700">Belum Lunas</span>
                             @endif
                         </td>
-                        <td class="px-4 py-3 text-center whitespace-nowrap">
+                        <td class="px-4 py-3 text-center">
                             <button type="button" 
                                 onclick="bukaEdit({{ $row->id }}, {{ $row->barang_id }}, {{ $row->jumlah_box }}, {{ $row->harga_jual }}, '{{ $row->tanggal->format('Y-m-d') }}', @js($row->pembeli), '{{ $row->status_pembayaran }}', @js($row->keterangan))"
                                 class="text-blue-600 hover:underline text-xs mr-2">
@@ -159,6 +182,13 @@
                             </form>
                         </td>
                     </tr>
+
+                    @php
+                        // Simpan data saat ini untuk pengecekan baris selanjutnya
+                        $prevDate = $currentDate;
+                        $prevPembeli = $currentPembeli;
+                    @endphp
+
                 @empty
                     <tr><td colspan="9" class="px-4 py-8 text-center text-gray-400">Belum ada data.</td></tr>
                 @endforelse

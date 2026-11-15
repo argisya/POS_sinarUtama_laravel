@@ -4,7 +4,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Barang extends Model {
     protected $table = 'barang';
-    protected $fillable = ['kode_barang', 'nama', 'satuan', 'harga', 'stok', 'stok_minimum', 'pcs_per_box'];
+        protected $fillable = ['kode_barang', 'nama', 'satuan', 'stok', 'pcs_per_box', 'stok_minimum'];
 
     protected static function boot() {
         parent::boot();
@@ -18,7 +18,7 @@ class Barang extends Model {
             // Default untuk barang baru dari Master
             $barang->satuan       = $barang->satuan       ?? 'pcs';
             $barang->stok_minimum = $barang->stok_minimum ?? 5;
-            $barang->harga        = $barang->harga        ?? 0;
+            // $barang->harga        = $barang->harga        ?? 0;
             $barang->stok         = $barang->stok         ?? 0;
         });
     }

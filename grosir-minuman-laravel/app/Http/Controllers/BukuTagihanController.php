@@ -6,7 +6,7 @@ use App\Models\KasMasuk;
 use Illuminate\Http\Request;
 
 class BukuTagihanController extends Controller {
-        public function index(Request $request) {
+    public function index(Request $request) {
         $search = $request->input('q');
         $filter = $request->input('filter', 'semua');
 
@@ -17,7 +17,9 @@ class BukuTagihanController extends Controller {
             }))
             ->when($filter === 'lunas', fn ($q) => $q->where('status_pembayaran', 'lunas'))
             ->when($filter === 'belum', fn ($q) => $q->where('status_pembayaran', 'belum_lunas'))
-            ->latest('tanggal')->latest('id')
+            ->orderBy('tanggal', 'desc')       // ⬅️ Urutkan Tanggal
+            ->orderBy('pembeli', 'asc')        // ⬅️ Urutkan Pembeli
+            ->orderBy('id', 'desc')            // ⬅️ Urutkan ID
             ->paginate(15)->withQueryString();
 
         // --- PERHITUNGAN DINAMIS BERDASARKAN BOX ---

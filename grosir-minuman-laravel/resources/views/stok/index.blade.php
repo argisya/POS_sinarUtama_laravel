@@ -57,7 +57,7 @@
                     <th class="px-4 py-3 text-left">Kode</th>
                     <th class="px-4 py-3 text-left">Nama Barang</th>
                     <th class="px-4 py-3 text-center">Isi / Box</th>
-                    <th class="px-4 py-3 text-right">Modal / Box</th>
+                    <!-- <th class="px-4 py-3 text-right">Modal / Box</th> -->
                     <th class="px-4 py-3 text-center">Stok Tersedia</th>
                     <th class="px-4 py-3 text-center">Status</th>
                 </tr>
@@ -97,13 +97,13 @@
                             {{ $row->pcs_per_box }} Pcs
                         </td>
                         
-                        <td class="px-4 py-3 text-right">
+                        <!-- <td class="px-4 py-3 text-right">
                             @if ($modalPerBox > 0)
                                 Rp {{ number_format($modalPerBox, 0, ',', '.') }}
                             @else
                                 <span class="text-xs text-gray-400">belum ada</span>
                             @endif
-                        </td>
+                        </td> -->
 
                         {{-- Stok Tersedia (Box & Pcs) --}}
                         <td class="px-4 py-3 text-center">

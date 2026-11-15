@@ -30,13 +30,21 @@ class DashboardController extends Controller {
                 return $row->jumlah;
             });
 
+        // ===== 1. Total Kas Masuk Keseluruhan =====
+        $totalKasMasuk = KasMasuk::with('barangKeluar')
+            ->get() // ⬅️ Filter whereMonth dan whereYear dihapus
+            ->sum(function ($row) {
+                if ($row->sumber === 'penjualan_tunai' && $row->barangKeluar) {
+                    return $row->barangKeluar->jumlah_box * $row->barangKeluar->harga_jual;
+                }
+                return $row->jumlah;
+            });
+
         // ===== 2. Total Keseluruhan Pengeluaran Kas Keluar =====
         $totalKasKeluar = \App\Models\KasKeluar::sum('jumlah');
 
-        // ===== 3. Saldo Kas Bulan Ini (Kas Masuk - Total Kas Keluar) =====
-        $kasBulanIni = $kasMasukBulanIni - $totalKasKeluar;
-        // ===== Total Keseluruhan Pengeluaran Kas Keluar =====
-        $totalKasKeluar = \App\Models\KasKeluar::sum('jumlah');
+        // ===== 3. Total Kas (Masuk - Keluar) =====
+        $totalKas = $totalKasMasuk - $totalKasKeluar;
 
         // ===== Perhitungan Sesuai Spesifikasi: Kas Masuk Hari Ini - Total Kas Keluar =====
         // $kasHariIni = $kasMasukHariIni - $totalKasKeluar;
@@ -51,14 +59,10 @@ class DashboardController extends Controller {
         $allBarangKeluar = BarangKeluar::all();
         $totalUtang = $allBarangKeluar->where('status_pembayaran', 'belum_lunas')->sum('total_harga');
 
-        // ===== 3. Total Keuntungan (Berdasarkan Box) =====
-                // ===== Keuntungan =====
-        // Keuntungan Kotor (Lunas)
+        // ===== Keuntungan =====
         $totalKeuntunganKotor = BarangKeluar::where('status_pembayaran', 'lunas')->sum('keuntungan');
-        // Pengeluaran
         $totalPengeluaran = \App\Models\KasKeluar::sum('jumlah');
-        // Sisa Saldo (Bisa minus jika pengeluaran lebih besar)
-        $totalKeuntungan = $totalKeuntunganKotor - $totalPengeluaran;  
+        $totalKeuntungan = $totalKeuntunganKotor - $totalPengeluaran; 
 
         $stokMenipis = Barang::whereColumn('stok', '<=', 'stok_minimum')
                         ->where('stok', '>', 0)->count();
@@ -161,7 +165,7 @@ class DashboardController extends Controller {
             ->get();
 
         return view('dashboard', compact(
-            'penjualanHariIni', 'kasBulanIni', 'totalPiutang','totalUtang',
+            'penjualanHariIni', 'totalKas', 'totalPiutang','totalUtang',
             'stokMenipis', 'stokHabis',
             'chartLabels', 'chartPenjualan', 'totalMingguIni',
             'recentTransaksi', 'barangKritis',

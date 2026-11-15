@@ -33,7 +33,7 @@ class MasterBarangController extends Controller {
             'nama'        => $validated['nama'],
             'pcs_per_box' => $validated['pcs_per_box'],
             'stok'        => 0, // Stok awal 0
-            'harga'       => 0, // Harga modal awal 0 (akan diisi saat Barang Masuk)
+            // 'harga' => 0,  <-- HAPUS BARIS INI
         ]);
 
         return redirect()->route('master-barang.index')

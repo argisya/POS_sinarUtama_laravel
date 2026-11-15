@@ -10,47 +10,43 @@ use Illuminate\Validation\ValidationException;
 
 class BarangKeluarController extends Controller {
     public function index() {
+        // Urutkan: Tanggal terbaru -> Pembeli (A-Z) -> ID terbaru
         $barangKeluar = BarangKeluar::with('barang')
-            ->latest('tanggal')->latest('id')
-            ->paginate(10);
+            ->orderBy('tanggal', 'desc')
+            ->orderBy('pembeli', 'asc')
+            ->orderBy('id', 'desc')
+            ->paginate(15); // Naikkan limit agar grup tidak terpotong sering
 
         $barang = Barang::withSum('barangMasuk as total_box_masuk', 'jumlah_box')
             ->withSum('barangKeluar as total_box_keluar', 'jumlah_box')
             ->orderBy('nama')
             ->get();
 
-
-        // Hitung Grand Total (Harga Jual x Jumlah Box)
-         $allBarangKeluar = BarangKeluar::all();
+        $allBarangKeluar = BarangKeluar::all();
         $grandTotal = $allBarangKeluar->sum(function ($row) {
             return $row->harga_jual * $row->jumlah_box;
         });
+
         return view('barang-keluar.index', compact('barangKeluar', 'barang', 'grandTotal'));
     }
 
-            public function store(Request $request) {
+    public function store(Request $request) {
         $validated = $request->validate([
             'barang_id'         => 'required|exists:barang,id',
             'jumlah_box'        => 'required|integer|min:1',
-            'harga_jual'        => 'required|integer|min:1', // Ini Harga Jual per BOX
+            'harga_jual'        => 'required|integer|min:1', // Harga Jual per BOX
             'tanggal'           => 'required|date',
             'pembeli'           => 'nullable|string|max:100',
             'status_pembayaran' => 'required|in:lunas,belum_lunas',
             'keterangan'        => 'nullable|string|max:255',
         ]);
 
-        // Ambil data barang beserta total box masuk dan keluar
+        // 1. Ambil data barang beserta total box masuk dan keluar
         $barang = Barang::withSum('barangMasuk as total_box_masuk', 'jumlah_box')
             ->withSum('barangKeluar as total_box_keluar', 'jumlah_box')
             ->findOrFail($validated['barang_id']);
 
-        if ($barang->harga <= 0) {
-            throw ValidationException::withMessages([
-                'barang_id' => "Barang \"{$barang->nama}\" belum pernah masuk, modal belum diketahui.",
-            ]);
-        }
-
-        // ⬇️ VALIDASI BARU: Berdasarkan Stok Tersedia (Box Masuk - Box Keluar) ⬇️
+        // 2. Validasi Stok Tersedia (Box Masuk - Box Keluar)
         $stokTersediaBox = ($barang->total_box_masuk ?? 0) - ($barang->total_box_keluar ?? 0);
 
         if ($stokTersediaBox < $validated['jumlah_box']) {
@@ -58,16 +54,22 @@ class BarangKeluarController extends Controller {
                 'jumlah_box' => "Stok tidak cukup. Stok saat ini: {$stokTersediaBox} Box.",
             ]);
         }
-        // ⬆️ ------------------------------------------------------------- ⬆️
 
-        // Hitung total pcs secara otomatis (untuk keperluan update kolom stok di DB)
-        $validated['jumlah'] = $validated['jumlah_box'] * $barang->pcs_per_box;
-
-        // Perhitungan Finansial
-        $totalHarga = $validated['harga_jual'] * $validated['jumlah_box'];
+        // 3. Ambil Modal Terakhir MURNI dari Barang Masuk
+        $lastMasuk = \App\Models\BarangMasuk::where('barang_id', $barang->id)
+                        ->latest('tanggal')->latest('id')->first();
         
-        // Hitung Keuntungan (Harga Jual Box - Modal Box)
-        $modalPerBox = $barang->harga;
+        $modalPerBox = $lastMasuk ? (int) $lastMasuk->harga_satuan : 0;
+
+        if ($modalPerBox <= 0) {
+            throw ValidationException::withMessages([
+                'barang_id' => "Barang \"{$barang->nama}\" belum pernah masuk atau harga modal belum diisi di Barang Masuk.",
+            ]);
+        }
+
+        // 4. Hitung Total Pcs & Finansial
+        $validated['jumlah'] = $validated['jumlah_box'] * $barang->pcs_per_box;
+        $totalHarga = $validated['harga_jual'] * $validated['jumlah_box'];
         $keuntunganPerBox = $validated['harga_jual'] - $modalPerBox;
         $totalKeuntungan = $keuntunganPerBox * $validated['jumlah_box'];
 
@@ -77,7 +79,7 @@ class BarangKeluarController extends Controller {
                 'keuntungan'  => $totalKeuntungan,
             ]));
 
-            // Tetap kurangi kolom stok pcs di DB (sebagai arsip total pcs)
+            // Kurangi stok di database (opsional, untuk arsip)
             Barang::where('id', $barang->id)->decrement('stok', $validated['jumlah']);
 
             if ($validated['status_pembayaran'] === 'lunas') {
@@ -98,7 +100,7 @@ class BarangKeluarController extends Controller {
             ->with('success', 'Barang keluar berhasil disimpan.');
     }
 
-        public function update(Request $request, BarangKeluar $barangKeluar) {
+    public function update(Request $request, BarangKeluar $barangKeluar) {
         $validated = $request->validate([
             'barang_id'         => 'required|exists:barang,id',
             'jumlah_box'        => 'required|integer|min:1',
@@ -132,8 +134,23 @@ class BarangKeluarController extends Controller {
             // 3. Hitung nilai baru
             $validated['jumlah'] = $validated['jumlah_box'] * $newBarang->pcs_per_box;
             $totalHarga = $validated['harga_jual'] * $validated['jumlah_box'];
-            $modalPerBox = $newBarang->harga;
-            $totalKeuntungan = ($validated['harga_jual'] - $modalPerBox) * $validated['jumlah_box'];
+            $barang = Barang::findOrFail($validated['barang_id']);
+
+            // ⬇️ CARI MODAL TERAKHIR DARI BARANG MASUK ⬇️
+            $lastMasuk = \App\Models\BarangMasuk::where('barang_id', $barang->id)
+                            ->latest('tanggal')->latest('id')->first();
+            
+            $modalPerBox = $lastMasuk ? $lastMasuk->harga_satuan : 0;
+
+            if ($modalPerBox <= 0) {
+                throw ValidationException::withMessages([
+                    'barang_id' => "Barang \"{$barang->nama}\" belum pernah masuk, modal belum diketahui.",
+                ]);
+            }
+
+            // Hitung Keuntungan
+            $keuntunganPerBox = $validated['harga_jual'] - $modalPerBox;
+            $totalKeuntungan = $keuntunganPerBox * $validated['jumlah_box'];
 
             // 4. Update data
             $barangKeluar->update(array_merge($validated, [
